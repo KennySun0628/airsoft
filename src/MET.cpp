@@ -47,11 +47,11 @@ void MET::setTargetColor(int targetNum, neoPixelColors color){
   }
 }
 
-void MET::displayTargets() const{
+void MET::displayTargets(){
   strip.show();
 }
 
-void MET::displayTargets(unsigned long time) const{
+void MET::displayTargets(unsigned long time){
   strip.show();
   delay(time);
   strip.clear();
