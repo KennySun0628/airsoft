@@ -19,19 +19,18 @@ enum neoPixelColors {
   CYAN  = 0x00FFFF,
   MAGENTA = 0xFF00FF,
   WHITE = 0xFFFFFF,
-  LED_OFF   = 0x000000
+  OFF   = 0x000000
 };
 
-enum status{
-  OFF,
-  ON,
-  HIT
-};
 
 struct target_s {
-  int LED_INDEX[TARGET_NUM_LED];
+  //The Index of the first led in the target
+  int startingLedIndex;
+  //The Index of the last led in the target
+  int endingLedIndex;
+  //pin number of the sensor
   int SENSOR_PIN;
-  status currentStatus;
+  int currentStatus;
 };
 
 class MET {
@@ -50,9 +49,12 @@ private:
   void practice();
   void random();
   void twin();
+
   void setTargetColor(int, neoPixelColors);
+  void setAllTargetColor(neoPixelColors);
+
   void turnOffTargets();
   void displayTargets();
   void displayTargets(unsigned long);
-  
+  int readSensors();
 };
