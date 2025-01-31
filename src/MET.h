@@ -52,7 +52,7 @@ private:
   void twin();
   void setTargetColor(int, neoPixelColors);
   void turnOffTargets();
-  void displayTargets() const;
-  void displayTargets(unsigned long) const;
+  void displayTargets();
+  void displayTargets(unsigned long);
   
 };
