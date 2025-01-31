@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../ArduinoJson"
+		},
+		{
+			"path": "../FastLED-master"
+		},
+		{
+			"path": "../HX711"
+		},
+		{
+			"path": "../HX711_ADC"
+		},
+		{
+			"path": "../HX711_ADC-master"
+		}
+	]
+}
