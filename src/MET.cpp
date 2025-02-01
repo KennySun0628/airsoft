@@ -46,8 +46,6 @@ void MET::setTargetColor(int targetNum, neoPixelColors color){
   //Serial.println(color);
   
   //sets all of the leds in the specified target to the same color
-  Serial.println(target[targetNum - 1].startingLedIndex);
-  //Serial.println(target[targetNum - 1].endingLedIndex);
   for(int i = target[targetNum - 1].startingLedIndex; 
       i <= target[targetNum - 1].endingLedIndex; i++){
     strip.setPixelColor(i, color);
@@ -56,13 +54,12 @@ void MET::setTargetColor(int targetNum, neoPixelColors color){
 
 //Sets ALL targets to specified color
 void MET::setAllTargetColor(neoPixelColors color){
-  Serial.println(color);
+  //Serial.println(color);
   strip.clear();
   for(int i = 1; i <= NUM_TARGETS; i++){
       setTargetColor(i, color);
-    }
-  strip.show();
-  delay(100);
+      delay(10);
+  } 
 }
 
 void MET::displayTargets(){
@@ -84,27 +81,21 @@ void MET::turnOffTargets(){
 
 void MET::quickDraw(){
   Serial.println("\nQuickdraw");
-  turnOffTargets();
-  delay(5000);
-	for(int i = 1; i <= NUM_TARGETS; i++){
-      setTargetColor(i, GREEN);
-    }
+  turnOffTargets(); 
+
+  setAllTargetColor(GREEN);
   displayTargets();
   
-
   timer.restart();
 
-  //int targetHit = readSensors();
-  delay(2345);
-  float elapsedTime = timer.elapsed() / (float) 1000;
-  /*
-  for(int i = 1; i <= NUM_TARGETS; i++){
-    if(i != targetHit)
-      setTargetColor(i, RED);
+  int hitSensor; 
+  while(hitSensor != HIGH){
+    hitSensor = digitalRead(2);
   }
-  */
+  float elapsedTime = timer.elapsed() / (float) 1000;
+ 
  setAllTargetColor(RED);
-  displayTargets();
+ displayTargets();
 
   Serial.print(elapsedTime, 3);
   Serial.println("s");
@@ -124,11 +115,36 @@ void MET::SD(){
 }
 
 void MET::practice(){
-	turnOffTargets();
+  strip.clear();
+  strip.setPixelColor(2, OFF);
+  strip.show();
+  
 }
 
 void MET::random(){
-	displayTargets();
+
+  setAllTargetColor(GREEN);
+  displayTargets();
+  
+  timer.restart();
+
+  int targetHit = readSensor(); 
+  
+  float elapsedTime = timer.elapsed() / (float) 1000;
+  if(targetHit ==  1){
+    strip.setPixelColor(0, RED);
+    strip.setPixelColor(1, RED);
+  }
+  else{
+    strip.setPixelColor(2, RED);
+    strip.setPixelColor(3, RED);
+  }
+  
+  setAllTargetColor(RED);
+  displayTargets();
+
+  Serial.print(elapsedTime, 3);
+  Serial.println("s");
 
 }
 
