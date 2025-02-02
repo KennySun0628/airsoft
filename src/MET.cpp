@@ -2,6 +2,7 @@
 //Implementation for MET class
 //Kenny Sun
 
+#include <TrueRandom.h>
 #include "MET.h"
 using namespace std;
 
@@ -42,9 +43,12 @@ void MET::run(int gameMode){
 }
 
 //Sets specific target to specified color
-void MET::setTargetColor(int targetNum, neoPixelColors color){
+void MET::setTargetColor(int targetNum, neoPixelColors color, bool clearStrip){
   //Serial.println(color);
-  
+  //Clears buffer if true; resets the status of all other leds
+  if(clearStrip) 
+    strip.clear();
+
   //sets all of the leds in the specified target to the same color
   for(int i = target[targetNum - 1].startingLedIndex; 
       i <= target[targetNum - 1].endingLedIndex; i++){
@@ -57,7 +61,7 @@ void MET::setAllTargetColor(neoPixelColors color){
   //Serial.println(color);
   strip.clear();
   for(int i = 1; i <= NUM_TARGETS; i++){
-      setTargetColor(i, color);
+      setTargetColor(i, color, false);
   } 
 }
 
@@ -67,6 +71,7 @@ void MET::displayTargets(){
 }
 
 void MET::displayTargets(unsigned long time){
+  delay(100);
   strip.show();
   delay(time);
   strip.clear();
@@ -88,7 +93,7 @@ void MET::quickDraw(){
   
   timer.restart();
 
-  int hitSensor; 
+  int hitSensor = LOW; 
   while(hitSensor != HIGH){
     hitSensor = digitalRead(2);
   }
@@ -103,15 +108,25 @@ void MET::quickDraw(){
 	
 
 void MET::SD(){
-  Serial.println("SD");
-  turnOffTargets();
-	setAllTargetColor(GREEN);
-  displayTargets();
-  delay(2500);
-  turnOffTargets();
-  delay(2500);
-  setAllTargetColor(RED);
-	displayTargets();
+  timer.restart();
+  int scoreCount = 0;
+
+  while((timer.elapsed() / 1000 ) <= 30){
+    randomSeed(analogRead(0));
+    int bullseye = TrueRandom.random(1, 17);
+    strip.clear();
+    setTargetColor(bullseye, GREEN, true);
+    displayTargets();
+
+    while(readSensors() != bullseye){}
+
+    setTargetColor(bullseye, RED, true);
+    displayTargets(1000);
+    scoreCount++;
+  }
+
+  Serial.print("Score: ");
+  Serial.println(scoreCount);
 }
 
 void MET::practice(){
