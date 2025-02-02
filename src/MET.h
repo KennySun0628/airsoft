@@ -47,7 +47,7 @@ private:
   Adafruit_NeoPixel strip;
   void quickDraw();
   void SD();
-  void practice();
+  void blackout();
   void random();
   void twin();
 
