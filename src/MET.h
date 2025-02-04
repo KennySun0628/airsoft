@@ -1,6 +1,7 @@
 //MET.h
 //header file for MET and target class
 //Kenny Sun
+#pragma once
 
 #include <Adafruit_NeoPixel.h>
 #include <Chrono.h>
