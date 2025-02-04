@@ -12,6 +12,7 @@ MET::MET(): isRunning(false), strip(TARGET_NUM_LED * NUM_TARGETS, TARGET_LED_PIN
   for(int i = 0; i < NUM_TARGETS; i++){
     target[i].SENSOR_PIN = (i + 3);
     pinMode(target[i].SENSOR_PIN, INPUT);
+    target[i].currentStatus = LOW;
     target[i].startingLedIndex = i * (TARGET_NUM_LED);
     target[i].endingLedIndex =  target[i].startingLedIndex + (TARGET_NUM_LED - 1);
   }
@@ -93,7 +94,7 @@ void MET::turnOffTargets(){
 
 //Gamemode 1: Quick Draw
 void MET::quickDraw(){
-
+  resetMET();
   setAllTargetColor(GREEN);
   displayTargets();
   
@@ -115,6 +116,7 @@ void MET::quickDraw(){
 	
 //Gamemode 2: Search and Destroy
 void MET::SD(){
+  resetMET();
   timer.restart();
   int scoreCount = 0;
 
@@ -139,6 +141,7 @@ void MET::SD(){
 
 //Gamemode 3: Blackout 
 void MET::blackout(){
+ resetMET();
  setAllTargetColor(GREEN);
  displayTargets();
  timer.restart();
@@ -186,4 +189,11 @@ bool MET::allTargetsHit(){
     }
   }
   return true;
+}
+
+void MET::resetMET(){
+  for(int i = 0; i < NUM_TARGETS; i++){
+    target[i].currentStatus = LOW;
+  }
+  strip.clear();
 }

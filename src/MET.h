@@ -61,4 +61,5 @@ private:
   int readSensors();
   bool allTargetsHit();
   void displaySpecificTarget(unsigned long, int);
+  void resetMET();
 };
