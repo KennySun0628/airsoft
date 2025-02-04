@@ -7,6 +7,7 @@
 #include <Chrono.h>
 
 #define TARGET_LED_PIN 13
+
 //Number of LEDs per Target
 #define TARGET_NUM_LED 1
 //Number of Targets in the grid
@@ -47,11 +48,11 @@ private:
   Adafruit_NeoPixel strip;
   void quickDraw();
   void SD();
-  void practice();
+  void blackout();
   void random();
   void twin();
 
-  void setTargetColor(int, neoPixelColors);
+  void setTargetColor(int, neoPixelColors, bool);
   void setAllTargetColor(neoPixelColors);
 
   void turnOffTargets();
