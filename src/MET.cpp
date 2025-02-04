@@ -2,6 +2,7 @@
 //Implementation for MET class
 //Kenny Sun
 
+#include <TrueRandom.h>
 #include "MET.h"
 using namespace std;
 
@@ -30,7 +31,7 @@ void MET::run(int gameMode){
 			SD();
 			break;
 		case 3:
-			practice();
+			blackout();
 			break;
 		case 4:
 			random();
@@ -42,9 +43,12 @@ void MET::run(int gameMode){
 }
 
 //Sets specific target to specified color
-void MET::setTargetColor(int targetNum, neoPixelColors color){
+void MET::setTargetColor(int targetNum, neoPixelColors color, bool clearStrip){
   //Serial.println(color);
-  
+  //Clears buffer if true; resets the status of all other leds
+  if(clearStrip) 
+    strip.clear();
+
   //sets all of the leds in the specified target to the same color
   for(int i = target[targetNum - 1].startingLedIndex; 
       i <= target[targetNum - 1].endingLedIndex; i++){
@@ -57,7 +61,7 @@ void MET::setAllTargetColor(neoPixelColors color){
   //Serial.println(color);
   strip.clear();
   for(int i = 1; i <= NUM_TARGETS; i++){
-      setTargetColor(i, color);
+      setTargetColor(i, color, false);
   } 
 }
 
@@ -67,6 +71,7 @@ void MET::displayTargets(){
 }
 
 void MET::displayTargets(unsigned long time){
+  delay(100);
   strip.show();
   delay(time);
   strip.clear();
@@ -78,50 +83,8 @@ void MET::turnOffTargets(){
   strip.show();
 }
 
-
+//Gamemode 1: Quick Draw
 void MET::quickDraw(){
-  Serial.println("\nQuickdraw");
-  turnOffTargets(); 
-
-  setAllTargetColor(GREEN);
-  displayTargets();
-  
-  timer.restart();
-
-  int hitSensor; 
-  while(hitSensor != HIGH){
-    hitSensor = digitalRead(2);
-  }
-  float elapsedTime = timer.elapsed() / (float) 1000;
- 
- setAllTargetColor(RED);
- displayTargets();
-
-  Serial.print(elapsedTime, 3);
-  Serial.println("s");
-}
-	
-
-void MET::SD(){
-  Serial.println("SD");
-  turnOffTargets();
-	setAllTargetColor(GREEN);
-  displayTargets();
-  delay(2500);
-  turnOffTargets();
-  delay(2500);
-  setAllTargetColor(RED);
-	displayTargets();
-}
-
-void MET::practice(){
-  strip.clear();
-  strip.setPixelColor(2, OFF);
-  strip.show();
-  
-}
-
-void MET::random(){
 
   setAllTargetColor(GREEN);
   displayTargets();
@@ -129,6 +92,7 @@ void MET::random(){
   timer.restart();
 
   int targetHit = readSensors(); 
+  Serial.print("Target Hit: ");
   Serial.println(targetHit); 
   float elapsedTime = timer.elapsed() / (float) 1000;
   if(targetHit ==  1){
@@ -145,6 +109,40 @@ void MET::random(){
   Serial.print(elapsedTime, 3);
   Serial.println("s");
 
+}
+	
+//Gamemode 2: Search and Destroy
+void MET::SD(){
+  timer.restart();
+  int scoreCount = 0;
+
+  while((timer.elapsed() / 1000 ) <= 5){
+    randomSeed(analogRead(0));
+    int bullseye = TrueRandom.random(1, 3);
+    strip.clear();
+    setTargetColor(bullseye, GREEN, true);
+    displayTargets();
+
+    while(readSensors() != bullseye){}
+
+    setTargetColor(bullseye, RED, true);
+    displayTargets(1000);
+    scoreCount++;
+  }
+  turnOffTargets();
+  Serial.print("Score: ");
+  Serial.println(scoreCount);
+}
+
+//Gamemode 3: Blackout 
+void MET::blackout(){
+  strip.clear();
+  strip.setPixelColor(2, OFF);
+  strip.show();
+  
+}
+
+void MET::random(){
 }
 
 void MET::twin(){
