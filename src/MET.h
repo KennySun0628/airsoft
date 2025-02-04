@@ -59,4 +59,6 @@ private:
   void displayTargets();
   void displayTargets(unsigned long);
   int readSensors();
+  bool allTargetsHit();
+  void displaySpecificTarget(unsigned long, int);
 };

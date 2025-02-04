@@ -77,6 +77,14 @@ void MET::displayTargets(unsigned long time){
   strip.clear();
   strip.show();
 }
+ 
+ void MET::displaySpecificTarget(unsigned long time, int target){
+  delay(100);
+  strip.show();
+  delay(time);
+  setTargetColor(target, OFF, false);
+  strip.show();
+ }
 
 void MET::turnOffTargets(){
   strip.clear();
@@ -92,17 +100,11 @@ void MET::quickDraw(){
   timer.restart();
 
   int targetHit = readSensors(); 
+  float elapsedTime = timer.elapsed() / (float) 1000;
+  setTargetColor(targetHit, RED, false);
+
   Serial.print("Target Hit: ");
   Serial.println(targetHit); 
-  float elapsedTime = timer.elapsed() / (float) 1000;
-  if(targetHit ==  1){
-    strip.setPixelColor(0, RED);
-    strip.setPixelColor(1, RED);
-  }
-  else{
-    strip.setPixelColor(2, RED);
-    strip.setPixelColor(3, RED);
-  }
   
   displayTargets();
 
@@ -116,7 +118,8 @@ void MET::SD(){
   timer.restart();
   int scoreCount = 0;
 
-  while((timer.elapsed() / 1000 ) <= 5){
+  while(!timer.hasPassed(10000)){
+    Serial.println(timer.elapsed() / 1000);
     randomSeed(analogRead(0));
     int bullseye = TrueRandom.random(1, 3);
     strip.clear();
@@ -126,7 +129,7 @@ void MET::SD(){
     while(readSensors() != bullseye){}
 
     setTargetColor(bullseye, RED, true);
-    displayTargets(1000);
+    displayTargets(800);
     scoreCount++;
   }
   turnOffTargets();
@@ -136,10 +139,19 @@ void MET::SD(){
 
 //Gamemode 3: Blackout 
 void MET::blackout(){
-  strip.clear();
-  strip.setPixelColor(2, OFF);
-  strip.show();
-  
+ setAllTargetColor(GREEN);
+ displayTargets();
+ timer.restart();
+
+ while(!allTargetsHit()){
+  int targetHit = readSensors();
+  setTargetColor(targetHit, RED, false);
+  displaySpecificTarget(800, targetHit);
+ }
+ 
+float elapsedTime = timer.elapsed() / (float) 1000;
+Serial.print(elapsedTime);
+Serial.println("s");
 }
 
 void MET::random(){
@@ -164,4 +176,14 @@ int MET::readSensors(){
     }
   }
   return targetNum;
+}
+
+
+bool MET::allTargetsHit(){
+  for(int i = 0; i < NUM_TARGETS; i++){
+    if(target[i].currentStatus != HIGH){
+      return false;
+    }
+  }
+  return true;
 }
