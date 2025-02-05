@@ -5,13 +5,20 @@
 
 #include <Adafruit_NeoPixel.h>
 #include <Chrono.h>
+#include <pt.h>
 
 #define TARGET_LED_PIN 13
 
 //Number of LEDs per Target
 #define TARGET_NUM_LED 1
 //Number of Targets in the grid
-#define NUM_TARGETS 4
+#define NUM_TARGETS 2 
+
+#define SD_TIME 8000.0
+#define RANDOM_TIME 8000.0
+#define TWIN_TIME 8000.0
+
+
 
 enum neoPixelColors {
   RED   = 0xFF0000,
@@ -32,6 +39,7 @@ struct target_s {
   int endingLedIndex;
   //pin number of the sensor
   int SENSOR_PIN;
+  //Status of the piezosensor
   int currentStatus;
 };
 
@@ -40,10 +48,17 @@ public:
   MET();
   ~MET();
   void run(int gameMode);
-  bool isRunning;
+  
 
 private:
-  Chrono timer;
+  struct pt timerThread;
+  bool timeUp;
+  unsigned long startTime;
+  float elapsedTime = 0.0;
+  float countDownTime;
+  bool countMode; //True = count up; False = count down
+
+  
   target_s target[NUM_TARGETS];
   Adafruit_NeoPixel strip;
   void quickDraw();
@@ -62,4 +77,5 @@ private:
   bool allTargetsHit();
   void displaySpecificTarget(unsigned long, int);
   void resetMET();
+  int updateTimerThread(pt* pt1);
 };
