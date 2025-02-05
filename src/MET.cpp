@@ -2,13 +2,14 @@
 //Implementation for MET class
 //Kenny Sun
 
+
 #include <TrueRandom.h>
 #include "MET.h"
 using namespace std;
 
 //constructor
-MET::MET(): isRunning(false), strip(TARGET_NUM_LED * NUM_TARGETS, TARGET_LED_PIN, NEO_GRB + NEO_KHZ800){
-
+MET::MET():  strip(TARGET_NUM_LED * NUM_TARGETS, TARGET_LED_PIN, NEO_GRB + NEO_KHZ800){
+  PT_INIT(&timerThread);
   for(int i = 0; i < NUM_TARGETS; i++){
     target[i].SENSOR_PIN = (i + 3);
     pinMode(target[i].SENSOR_PIN, INPUT);
@@ -24,20 +25,25 @@ MET::MET(): isRunning(false), strip(TARGET_NUM_LED * NUM_TARGETS, TARGET_LED_PIN
 MET::~MET(){}
 
 void MET::run(int gameMode){
+  
 	switch (gameMode){
-		case 1: 
+		case 1:  
 			quickDraw();
 			break;
-		case 2:
+		case 2: 
 			SD();
 			break;
 		case 3:
 			blackout();
 			break;
 		case 4:
+      countMode = false;
+      countDownTime = RANDOM_TIME;
 			random();
 			break;
 		case 5:
+      countMode = false;
+      countDownTime = TWIN_TIME;
 			twin();
 			break;
 	}
@@ -50,7 +56,7 @@ void MET::setTargetColor(int targetNum, neoPixelColors color, bool clearStrip){
   if(clearStrip) 
     strip.clear();
 
-  //sets all of the leds in the specified target to the same color
+  //sets all of the LEDs in the specified target to the same color
   for(int i = target[targetNum - 1].startingLedIndex; 
       i <= target[targetNum - 1].endingLedIndex; i++){
     strip.setPixelColor(i, color);
@@ -95,21 +101,27 @@ void MET::turnOffTargets(){
 //Gamemode 1: Quick Draw
 void MET::quickDraw(){
   resetMET();
+  countMode = true;
   setAllTargetColor(GREEN);
   displayTargets();
   
-  timer.restart();
-
-  int targetHit = readSensors(); 
-  float elapsedTime = timer.elapsed() / (float) 1000;
-  setTargetColor(targetHit, RED, false);
-
+  int targetHit = -1;
+  while(!timeUp){
+    updateTimerThread(&timerThread);
+    targetHit = readSensors();
+    if(targetHit != -1){
+      timeUp = true;
+    }
+    delay(10);
+  }
+  setTargetColor(targetHit, RED, true);
   Serial.print("Target Hit: ");
   Serial.println(targetHit); 
   
   displayTargets();
 
-  Serial.print(elapsedTime, 3);
+  Serial.print("Final Time: ");
+  Serial.print((elapsedTime / 1000000), 3);
   Serial.println("s");
 
 }
@@ -117,22 +129,31 @@ void MET::quickDraw(){
 //Gamemode 2: Search and Destroy
 void MET::SD(){
   resetMET();
-  timer.restart();
+  countMode = false;
+  countDownTime = SD_TIME;
   int scoreCount = 0;
 
-  while(!timer.hasPassed(10000)){
-    Serial.println(timer.elapsed() / 1000);
+  while(!timeUp){
+   updateTimerThread(&timerThread);
+
     randomSeed(analogRead(0));
     int bullseye = TrueRandom.random(1, 3);
     strip.clear();
     setTargetColor(bullseye, GREEN, true);
     displayTargets();
 
-    while(readSensors() != bullseye){}
+    while(readSensors() != bullseye){
+      updateTimerThread(&timerThread);
+      if(timeUp)
+        break;
+      //PT_YIELD(&timerThread);
+    }
 
-    setTargetColor(bullseye, RED, true);
-    displayTargets(800);
-    scoreCount++;
+    if(!timeUp){
+      setTargetColor(bullseye, RED, true);
+      displayTargets(800);
+      scoreCount++;
+    }
   }
   turnOffTargets();
   Serial.print("Score: ");
@@ -142,17 +163,16 @@ void MET::SD(){
 //Gamemode 3: Blackout 
 void MET::blackout(){
  resetMET();
+ countMode = true;
  setAllTargetColor(GREEN);
  displayTargets();
- timer.restart();
 
  while(!allTargetsHit()){
   int targetHit = readSensors();
   setTargetColor(targetHit, RED, false);
   displaySpecificTarget(800, targetHit);
  }
- 
-float elapsedTime = timer.elapsed() / (float) 1000;
+
 Serial.print(elapsedTime);
 Serial.println("s");
 }
@@ -166,18 +186,15 @@ void MET::twin(){
 }
 
 int MET::readSensors(){
-  int targetNum ;
-  bool hit = false;
+  int targetNum = -1;
 
-  while(!hit){
-    for(int i = 0; i < 3; i++){
-      target[i].currentStatus = digitalRead(target[i].SENSOR_PIN);
-      if(target[i].currentStatus == HIGH){
-        targetNum = i + 1;
-        hit = true;
-      }
+  for(int i = 0; i < NUM_TARGETS; i++){
+    target[i].currentStatus = digitalRead(target[i].SENSOR_PIN);
+    if(target[i].currentStatus == HIGH){
+      targetNum = i + 1;
     }
   }
+
   return targetNum;
 }
 
@@ -196,4 +213,37 @@ void MET::resetMET(){
     target[i].currentStatus = LOW;
   }
   strip.clear();
+  timeUp = false;
+}
+
+int MET::updateTimerThread(struct pt* pt1){
+  PT_BEGIN(pt1);
+  
+  //Track the last update time
+  unsigned long lastMicros = micros();
+
+  while(!(timeUp)){
+    unsigned long currentMicros = micros();
+    float deltaTime = (currentMicros - lastMicros) / 1000.0; //converts to milliseconds
+    if(deltaTime >= 1.0){
+      lastMicros = currentMicros;
+
+      //Check if we are counting up or down
+      if(countMode){
+        elapsedTime += deltaTime;
+      }
+      else{
+        countDownTime -= deltaTime;
+        if(countDownTime <= 0.0){
+          countDownTime = 0.0;
+           timeUp = true;
+        }
+      }
+      Serial.print("Time: ");
+      Serial.print(countMode ? (elapsedTime / 1000) : (countDownTime / 1000), 3);
+      Serial.println("s");
+    }
+    PT_YIELD(pt1);
+  }
+  PT_END(pt1);
 }
