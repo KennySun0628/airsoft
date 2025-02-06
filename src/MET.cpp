@@ -121,7 +121,7 @@ void MET::quickDraw(){
   displayTargets();
 
   Serial.print("Final Time: ");
-  Serial.print((elapsedTime / 1000000), 3);
+  Serial.print((elapsedTime / 1000.0), 3);
   Serial.println("s");
 
 }
@@ -130,11 +130,11 @@ void MET::quickDraw(){
 void MET::SD(){
   resetMET();
   countMode = false;
-  countDownTime = SD_TIME;
+  countDownTime = 10000.0;
   int scoreCount = 0;
 
   while(!timeUp){
-   updateTimerThread(&timerThread);
+   //updateTimerThread(&timerThread);
 
     randomSeed(analogRead(0));
     int bullseye = TrueRandom.random(1, 3);
@@ -220,13 +220,22 @@ int MET::updateTimerThread(struct pt* pt1){
   PT_BEGIN(pt1);
   
   //Track the last update time
-  unsigned long lastMicros = micros();
+  static unsigned long lastMillis = millis();
+  static unsigned long deltaTime = 0;
+  while(!timeUp){
+    unsigned long currentMillis = millis();
 
-  while(!(timeUp)){
-    unsigned long currentMicros = micros();
-    float deltaTime = (currentMicros - lastMicros) / 1000.0; //converts to milliseconds
+    if (currentMillis >= lastMillis) {
+    deltaTime = currentMillis - lastMillis;
+    } 
+    else {
+    // handle overflow scenario
+    deltaTime = (4294967295 - lastMillis) + currentMillis + 1;
+    }
+
+
     if(deltaTime >= 1.0){
-      lastMicros = currentMicros;
+      lastMillis = currentMillis;
 
       //Check if we are counting up or down
       if(countMode){
@@ -239,10 +248,11 @@ int MET::updateTimerThread(struct pt* pt1){
            timeUp = true;
         }
       }
-      Serial.print("Time: ");
-      Serial.print(countMode ? (elapsedTime / 1000) : (countDownTime / 1000), 3);
-      Serial.println("s");
     }
+    Serial.print("Time: ");
+    Serial.print(countMode ? (elapsedTime / 1000.0) : (countDownTime / 1000.0), 3);
+    Serial.println("s");
+    
     PT_YIELD(pt1);
   }
   PT_END(pt1);
