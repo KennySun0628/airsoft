@@ -54,8 +54,8 @@ private:
   struct pt timerThread;
   bool timeUp;
   unsigned long startTime;
-  float elapsedTime = 0.0;
-  float countDownTime;
+  unsigned long elapsedTime = 0.0;
+  unsigned long countDownTime = 0.0;
   bool countMode; //True = count up; False = count down
 
   
