@@ -7,13 +7,20 @@
 #include <Chrono.h>
 #include <pt.h>
 
+#define VERBOSE false
+
 #define TARGET_LED_PIN 13
 
 //Number of LEDs per Target
 #define TARGET_NUM_LED 1
+
+//LED brightness
+#define LED_BRIGHTNESS 150
+
 //Number of Targets in the grid
 #define NUM_TARGETS 2 
 
+//Timer for the Game Modes (in milliseconds)
 #define SD_TIME 8000.0
 #define RANDOM_TIME 8000.0
 #define TWIN_TIME 8000.0
@@ -35,10 +42,13 @@ enum neoPixelColors {
 struct target_s {
   //The Index of the first led in the target
   int startingLedIndex;
+
   //The Index of the last led in the target
   int endingLedIndex;
+
   //pin number of the sensor
   int SENSOR_PIN;
+
   //Status of the piezosensor
   int currentStatus;
 };
