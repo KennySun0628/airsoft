@@ -345,9 +345,9 @@ void MET::blackout(){
   }
  }
 
-Serial.print("Final Time: ");
-Serial.print(elapsedTime / 1000, 3);
-Serial.println("s");
+  Serial.print("Final Time: ");
+  Serial.print((elapsedTime / 1000.0), 3);
+  Serial.println("s");
 }
 
 /*
