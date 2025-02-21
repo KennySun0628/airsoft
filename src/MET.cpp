@@ -8,6 +8,7 @@ using namespace std;
 
 //constructor
 MET::MET():  strip(TARGET_NUM_LED * NUM_TARGETS, TARGET_LED_PIN, NEO_GRB + NEO_KHZ800){
+  strip.clear();
   strip.setBrightness(LED_BRIGHTNESS);
   PT_INIT(&timerThread);
   for(int i = 0; i < NUM_TARGETS; i++){
@@ -73,7 +74,8 @@ sets the color of a single target, with the option to clear all other leds or re
 Parameters: 
 int targetNum         - target number to change color (Indexed at 1 to match the physical target number)
 neoPixelColors color  - Color to set the target to (from the neoPixelColors enum list)
-bool clearStrip       - Sets all targets' LEDs to OFF if TRUE, retains their original states if FALSE
+bool clearStrip       - true:   Sets other target LEDs to OFF 
+                        false:  Other target LEDs retains their original states
 */
 void MET::setTargetColor(int targetNum, neoPixelColors color, bool clearStrip){
   if(VERBOSE){
@@ -269,7 +271,7 @@ void MET::quickDraw(){
   int targetHit = -1;
   while(!timeUp){
     updateTimerThread(&timerThread);
-    targetHit = readSensors();
+    targetHit = readSensors(false);
     if(targetHit != -1){
       timeUp = true;
     }
@@ -306,7 +308,7 @@ void MET::SD(){
     setTargetColor(bullseye, GREEN, true);
     displayTargets();
 
-    while(readSensors() != bullseye){
+    while(readSensors(true) != bullseye){
       updateTimerThread(&timerThread);
       if(timeUp)
         break;
@@ -336,7 +338,7 @@ void MET::blackout(){
 
  while(!allTargetsHit()){
   updateTimerThread(&timerThread);
-  int targetHit = readSensors();
+  int targetHit = readSensors(false);
   if(targetHit != -1){
     setTargetColor(targetHit, RED, false);
     displaySpecificTarget(800, targetHit);
@@ -374,22 +376,25 @@ Helper functions to facilitate reading input from sensors and checking if all se
 */
 
 /*
-int readSensors()
+int readSensors(bool reset)
 Reads if sensors detect any unique inputs.
 
 Return type:
 int    - the number of the target that was hit
 
 Parameters: 
-NONE
+bool reset - true:   resets the "currentStatus" for the sensor to allow reuse
+             false:  sets "currentStatus" sensor so further readings do not occur 
 */
-int MET::readSensors(){
+int MET::readSensors(bool reset){
   int targetNum = -1;
 
   for(int i = 0; i < NUM_TARGETS; i++){
-    int tempStatus = digitalRead(target[i].SENSOR_PIN);
+   int tempStatus = digitalRead(target[i].SENSOR_PIN);
     if(target[i].currentStatus == LOW && tempStatus == HIGH){
-      target[i].currentStatus = HIGH;
+      if(!reset){
+        target[i].currentStatus = HIGH;
+      }
       targetNum = i + 1;
       return targetNum;
     }
@@ -456,6 +461,7 @@ int MET::updateTimerThread(struct pt* pt1){
   //Track the last update time
   static unsigned long lastMillis = millis();
   static unsigned long deltaTime = 0;
+  static unsigned long timeRemain = countDownTime;
   while(!timeUp){
     unsigned long currentMillis = millis();
 
@@ -468,7 +474,7 @@ int MET::updateTimerThread(struct pt* pt1){
     }
 
 
-    if(deltaTime >= 1.0){
+    if(deltaTime > 0.0){
       lastMillis = currentMillis;
 
       //Check if we are counting up or down
@@ -476,15 +482,15 @@ int MET::updateTimerThread(struct pt* pt1){
         elapsedTime += deltaTime;
       }
       else{
-        countDownTime -= deltaTime;
-        if(countDownTime <= 0.0){
-          countDownTime = 0.0;
+        timeRemain -= deltaTime;
+        if(timeRemain <= 0.0 || timeRemain > countDownTime ){
+          timeRemain = 0.0;
            timeUp = true;
         }
       }
     }
     Serial.print("Time: ");
-    Serial.print(countMode ? (elapsedTime / 1000.0) : (countDownTime / 1000.0), 3);
+    Serial.print(countMode ? (elapsedTime / 1000.0) : (timeRemain / 1000.0), 3);
     Serial.println("s");
     
     PT_YIELD(pt1);
