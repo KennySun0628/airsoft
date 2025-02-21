@@ -83,7 +83,7 @@ private:
   void turnOffTargets();
   void displayTargets();
   void displayTargets(unsigned long);
-  int readSensors();
+  int readSensors(bool);
   bool allTargetsHit();
   void displaySpecificTarget(unsigned long, int);
   void resetMET();
