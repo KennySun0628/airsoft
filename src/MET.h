@@ -7,7 +7,9 @@
 #include <Chrono.h>
 #include <pt.h>
 
-#define VERBOSE false
+#define VERBOSE false 
+
+#define MILLI_IN_SECONDS 1000.0
 
 #define TARGET_LED_PIN 13
 
@@ -25,7 +27,12 @@
 #define RANDOM_TIME 8000.0
 #define TWIN_TIME 8000.0
 
+//Time between automatic target change for Random and Twin gamemodes
+#define TIMEOUT 1.5f
 
+//Calibration time used for synchronizing timeout time calculations (to account for internal function calls)
+#define RANDOM_CALIBRATION 0.109f
+#define TWIN_CALIBRATION 0.2f
 
 enum neoPixelColors {
   RED   = 0xFF0000,
