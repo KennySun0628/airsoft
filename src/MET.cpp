@@ -39,8 +39,6 @@ void MET::run(int gameMode){
 			blackout();
 			break;
 		case 4:
-      countMode = false;
-      countDownTime = RANDOM_TIME;
 			random();
 			break;
 		case 5:
@@ -193,7 +191,7 @@ Parameters:
 None
 */
 void MET::displayTargets(){
-  delay(100);
+  delay(50);
   strip.show();
 }
 
@@ -206,7 +204,7 @@ Parameters:
 unsigned long time    - How long to display the targets for (in Milliseconds)
 */
 void MET::displayTargets(unsigned long time){
-  delay(100);
+  delay(50);
   strip.show();
   delay(time);
   strip.clear();
@@ -223,7 +221,7 @@ unsigned long time    - How long to display the target for (in Milliseconds)
 int target            - Target to display (Indexed at 1 to match physical target number)
 */
  void MET::displaySpecificTarget(unsigned long time, int target){
-  delay(100);
+  delay(50);
   strip.show();
   delay(time);
   setTargetColor(target, OFF, false);
@@ -261,10 +259,14 @@ Game Modes:
 Game Mode 1: Quick Draw
 All targets light green, first target hit turns red, others turn off. 
 Timed till first target is hit.
+***ADD LEFT AND RIGHT HALF RANDOMIZED TARGET***
 */
 void MET::quickDraw(){
   resetMET();
   countMode = true;
+  if(VERBOSE){
+    Serial.println("Gamemode: #1 - Quick Draw");
+  }
   setAllTargetColor(GREEN);
   displayTargets();
   
@@ -294,17 +296,23 @@ Game Mode 2: Search and Destroy
 One  random target lights green at a time, turns red briefly when hit. 
 Next target lights up after first one is hit. 
 Timed till x targets hit.
+***ADD INCREMENTAL LIT TARGET NUMBER***
 */
 void MET::SD(){
   resetMET();
   countMode = false;
-  countDownTime = 10000.0;
+  countDownTime = SD_TIME;
+  if(VERBOSE){
+    Serial.println("Gamemode: #2 - Search and Destroy");
+    Serial.print("Time Limit: ");
+    Serial.print(countDownTime / MILLI_IN_SECONDS);
+    Serial.println("sec");
+  }
   int scoreCount = 0;
 
   while(!timeUp){
     randomSeed(analogRead(0));
-    int bullseye = TrueRandom.random(1, 3);
-    strip.clear();
+    int bullseye = TrueRandom.random(1, NUM_TARGETS + 1);
     setTargetColor(bullseye, GREEN, true);
     displayTargets();
 
@@ -332,6 +340,9 @@ Timed until all targets are hit.
 */
 void MET::blackout(){
  resetMET();
+ if(VERBOSE){
+  Serial.println("Gamemode: #3 - Blackout");
+ }
  countMode = true;
  setAllTargetColor(GREEN);
  displayTargets();
@@ -341,7 +352,7 @@ void MET::blackout(){
   int targetHit = readSensors(false);
   if(targetHit != -1){
     setTargetColor(targetHit, RED, false);
-    displaySpecificTarget(800, targetHit);
+    displaySpecificTarget(200, targetHit);
   }
  }
 
@@ -357,6 +368,72 @@ Next target lights up after 1.5 seconds or when the first is hit, whichever come
 Scored after x seconds.
 */
 void MET::random(){
+  resetMET();
+  countMode = false;
+  countDownTime = RANDOM_TIME;
+  if(VERBOSE){
+    Serial.println("Gamemode: #4 - Random");
+    Serial.print("Time Limit: ");
+    Serial.print(countDownTime / MILLI_IN_SECONDS);
+    Serial.println("sec");
+  }
+  
+  static unsigned long prevTime = 0;
+  static unsigned long delta = 0;
+  int scoreCount = 0;
+  float timeoutSeconds = VERBOSE ? TIMEOUT - RANDOM_CALIBRATION: TIMEOUT;
+  
+
+  while(!timeUp){
+    randomSeed(analogRead(0));
+    int bullseye = TrueRandom.random(1, NUM_TARGETS + 1);
+    setTargetColor(bullseye, GREEN, true);
+    displayTargets();
+
+    bool timeout = false;
+
+    if(VERBOSE){
+      Serial.print("Bullseye: ");
+      Serial.println(bullseye);
+      Serial.print("Score: ");
+      Serial.println(scoreCount);
+    }
+
+    prevTime = millis();
+    delta = 0;
+    while(readSensors(true) != bullseye){
+      unsigned long currentTime = millis();
+
+      if(currentTime >= prevTime){
+        delta = (currentTime - prevTime);
+      }
+      else{
+        //Handel overflow scenario
+        delta = ((4294967295 - prevTime) + currentTime + 1);
+      }
+      if(delta > (timeoutSeconds * MILLI_IN_SECONDS)){
+        timeout = true;
+        break;
+      }
+
+      updateTimerThread(&timerThread);
+      if(timeUp)
+        break;
+    }
+    if(VERBOSE){
+      Serial.print("Timed Out: ");
+      Serial.println(timeout ? "True" : "False");
+    }
+
+    if(!timeUp && !timeout){
+      setTargetColor(bullseye, RED,  true);
+      displayTargets(800);
+      scoreCount++;
+    }
+  }
+  turnOffTargets();
+  Serial.print("Score: ");
+  Serial.println(scoreCount);
 }
 
 /*
@@ -490,7 +567,7 @@ int MET::updateTimerThread(struct pt* pt1){
       }
     }
     Serial.print("Time: ");
-    Serial.print(countMode ? (elapsedTime / 1000.0) : (timeRemain / 1000.0), 3);
+    Serial.print(countMode ? (elapsedTime / MILLI_IN_SECONDS) : (timeRemain / MILLI_IN_SECONDS), 3);
     Serial.println("s");
     
     PT_YIELD(pt1);
