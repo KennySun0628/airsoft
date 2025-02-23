@@ -7,19 +7,25 @@
 using namespace std;
 
 //constructor
-MET::MET():  strip(TARGET_NUM_LED * NUM_TARGETS, TARGET_LED_PIN, NEO_GRB + NEO_KHZ800){
-  strip.clear();
-  strip.setBrightness(LED_BRIGHTNESS);
+MET::MET(): {
   PT_INIT(&timerThread);
-  for(int i = 0; i < NUM_TARGETS; i++){
-    target[i].SENSOR_PIN = (i + 3);
-    pinMode(target[i].SENSOR_PIN, INPUT);
-    target[i].currentStatus = LOW;
-    target[i].startingLedIndex = i * (TARGET_NUM_LED);
-    target[i].endingLedIndex =  target[i].startingLedIndex + (TARGET_NUM_LED - 1);
-  }
+  int totalTargets = NUM_TARGETS;
+  int targetsPerStrip = NUM_TARGETS / NUM_ROWS;
 
-  strip.begin();
+  for(int i = 0; i < NUM_ROWS){
+    strip[i] = new Adafruit_NeoPixel( (totalTargets > targetsPerStrip) ? targetsPerStrip * TARGET_NUM_LED : totalTargets * TARGET_NUM_LED, TARGET_LED_PIN - i, NEO_GRB + NEO_KHZ800);
+    totalTargets -= targetsPerStrip;
+    strip[i].setBrightness(LED_BRIGHTNESS);
+    strip[i].begin();
+    
+    for(int j = i * NUM_ROWS; j < (i * NUM_ROWS) + (NUM_TARGETS / NUM_ROWS); j++){
+      target[j].SENSOR_PIN = (j + 3);
+      pinMode(target[i].SENSOR_PIN, INPUT);
+      target[j].currentStatus = LOW;
+      target[j].startingLedIndex = j * TARGET_NUM_LED;
+      target[j].endingLedIndex =  target[j].startingLedIndex + (TARGET_NUM_LED - 1);
+    }
+  }
 }
 
 //destructor
@@ -267,7 +273,14 @@ void MET::quickDraw(){
   if(VERBOSE){
     Serial.println("Gamemode: #1 - Quick Draw");
   }
-  setAllTargetColor(GREEN);
+  randomSeed(analogRead(0));
+  int bullseye1 = TrueRandom.random(1, NUM_TARGETS + 1);
+  int bullseye2 = -1;
+  do{
+    randomSeed(analogRead(0));
+    bullseye2 = TrueRandom.random(3, NUM_TARGETS + 1);
+    
+  }while(bullseye2 %)
   displayTargets();
   
   int targetHit = -1;

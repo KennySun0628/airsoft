@@ -11,16 +11,20 @@
 
 #define MILLI_IN_SECONDS 1000.0
 
+//Largets pin for target leds strips **decremented for successive strips**
 #define TARGET_LED_PIN 13
 
 //Number of LEDs per Target
 #define TARGET_NUM_LED 1
 
-//LED brightness
-#define LED_BRIGHTNESS 150
-
 //Number of Targets in the grid
 #define NUM_TARGETS 2 
+
+//Number of Rows of LEDs
+#define NUM_ROWS 1
+
+//LED brightness
+#define LED_BRIGHTNESS 150
 
 //Timer for the Game Modes (in milliseconds)
 #define SD_TIME 8000.0
@@ -77,7 +81,7 @@ private:
 
   
   target_s target[NUM_TARGETS];
-  Adafruit_NeoPixel strip;
+  Adafruit_NeoPixel* strip[NUM_ROWS];
   void quickDraw();
   void SD();
   void blackout();
