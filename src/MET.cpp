@@ -9,27 +9,32 @@ using namespace std;
 //constructor
 MET::MET(): {
   PT_INIT(&timerThread);
-  int totalTargets = NUM_TARGETS;
+  int targetsRemaining = NUM_TARGETS;
   int targetsPerStrip = NUM_TARGETS / NUM_ROWS;
 
   for(int i = 0; i < NUM_ROWS){
-    strip[i] = new Adafruit_NeoPixel( (totalTargets > targetsPerStrip) ? targetsPerStrip * TARGET_NUM_LED : totalTargets * TARGET_NUM_LED, TARGET_LED_PIN - i, NEO_GRB + NEO_KHZ800);
-    totalTargets -= targetsPerStrip;
+    strip[i] = new Adafruit_NeoPixel( (targetsRemaining > targetsPerStrip) ? targetsPerStrip * TARGET_NUM_LED : targetsRemaining * TARGET_NUM_LED, TARGET_LED_PIN - i, NEO_GRB + NEO_KHZ800);
     strip[i].setBrightness(LED_BRIGHTNESS);
     strip[i].begin();
     
-    for(int j = i * NUM_ROWS; j < (i * NUM_ROWS) + (NUM_TARGETS / NUM_ROWS); j++){
+    for(int j = i * NUM_ROWS; j < (i * NUM_ROWS) + ((targetsRemaining > targetsPerStrip) ? targetsPerStrip : targetsRemaining); j++){
       target[j].SENSOR_PIN = (j + 3);
       pinMode(target[i].SENSOR_PIN, INPUT);
       target[j].currentStatus = LOW;
       target[j].startingLedIndex = j * TARGET_NUM_LED;
       target[j].endingLedIndex =  target[j].startingLedIndex + (TARGET_NUM_LED - 1);
     }
+    targetsRemaining -= targetsPerStrip;
   }
 }
 
 //destructor
-MET::~MET(){}
+MET::~MET(){
+  for(int i = 0; i < NUM_ROWS; i++){
+    delete strip[i];
+    strip[i] = nullptr;
+  }
+}
 
 //Main function to facilitate modes changes
 void MET::run(int gameMode){
@@ -127,7 +132,11 @@ void MET::setTargetColor(int targetNum, neoPixelColors color, bool clearStrip){
   //Clears buffer if true; resets the status of all other leds
   if(clearStrip) 
     strip.clear();
-
+  /*
+  Implement get column and get row functions:
+  getColumn = (targetNum + (NUM_ROW - 1)) % NUM_ROW
+  getRow = (targetNum - 1) / NUM_ROW (int)
+  */
   //sets all of the LEDs in the specified target to the same color
   for(int i = target[targetNum - 1].startingLedIndex; 
       i <= target[targetNum - 1].endingLedIndex; i++){
