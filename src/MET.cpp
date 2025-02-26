@@ -6,24 +6,31 @@
 #include "MET.h"
 using namespace std;
 
-//constructor
-MET::MET(): {
+//Constructor
+MET::MET(){
   PT_INIT(&timerThread);
   int targetsRemaining = NUM_TARGETS;
-  int targetsPerStrip = NUM_TARGETS / NUM_ROWS;
+  const int targetsPerStrip = NUM_TARGETS / NUM_ROWS;
 
-  for(int i = 0; i < NUM_ROWS){
+  //initialize each row of LEDs
+  for(int i = 0; i < NUM_ROWS; i++){
+    //Ternary statements check if there are more total targets remaining than the amount of targets there should be in each strip
+    //If there true, use the number of targest per strip
+    //If false, uses number of targets remaining. This accounts for remainders if NUM_TARGETS is not evenly divisible by NUM_ROWS
     strip[i] = new Adafruit_NeoPixel( (targetsRemaining > targetsPerStrip) ? targetsPerStrip * TARGET_NUM_LED : targetsRemaining * TARGET_NUM_LED, TARGET_LED_PIN - i, NEO_GRB + NEO_KHZ800);
-    strip[i].setBrightness(LED_BRIGHTNESS);
-    strip[i].begin();
+    strip[i] -> setBrightness(LED_BRIGHTNESS);
+    strip[i] -> begin();
     
-    for(int j = i * NUM_ROWS; j < (i * NUM_ROWS) + ((targetsRemaining > targetsPerStrip) ? targetsPerStrip : targetsRemaining); j++){
+    //initialize every target that belongs in this row
+    for(int j = i * targetsPerStrip; j < (i * targetsPerStrip) + ((targetsRemaining > targetsPerStrip) ? targetsPerStrip : targetsRemaining); j++){
       target[j].SENSOR_PIN = (j + 3);
       pinMode(target[i].SENSOR_PIN, INPUT);
       target[j].currentStatus = LOW;
+      target[j].rowIndex = i;
       target[j].startingLedIndex = j * TARGET_NUM_LED;
       target[j].endingLedIndex =  target[j].startingLedIndex + (TARGET_NUM_LED - 1);
     }
+    //Number of targets remaining gets decremented after every loop by the amount per strip   
     targetsRemaining -= targetsPerStrip;
   }
 }
@@ -90,57 +97,20 @@ void MET::setTargetColor(int targetNum, neoPixelColors color, bool clearStrip){
   if(VERBOSE){
     Serial.print("Target: ");
     Serial.print(targetNum);
-    switch(color){
-      case RED:
-        Serial.println(" RED");
-        break;
-
-      case GREEN:
-        Serial.println(" GREEN");
-        break;
-
-      case BLUE: 
-        Serial.println(" BLUE");
-        break;
-      
-      case YELLOW:
-        Serial.println(" YELLOW");
-        break;
-      
-      case CYAN:
-        Serial.println(" CYAN");
-        break;
-      
-      case MAGENTA:
-        Serial.println(" MAGENTA");
-        break;
-
-      case WHITE:
-        Serial.println(" WHITE");
-        break;
-
-      case OFF:
-        Serial.println(" OFF");
-        break;
-
-      default:
-        Serial.println(" Unknown Color Type");
-        break;
-    }
+    printColor(color);
   }
 
   //Clears buffer if true; resets the status of all other leds
   if(clearStrip) 
-    strip.clear();
+    strip[target[targetNum- 1].rowIndex] -> clear();
   /*
   Implement get column and get row functions:
   getColumn = (targetNum + (NUM_ROW - 1)) % NUM_ROW
   getRow = (targetNum - 1) / NUM_ROW (int)
   */
   //sets all of the LEDs in the specified target to the same color
-  for(int i = target[targetNum - 1].startingLedIndex; 
-      i <= target[targetNum - 1].endingLedIndex; i++){
-    strip.setPixelColor(i, color);
+  for(int i = target[targetNum - 1].startingLedIndex; i <= target[targetNum - 1].endingLedIndex; i++){
+    strip[target[targetNum - 1].rowIndex] -> setPixelColor(i, color);
   }
 }
 
@@ -153,46 +123,13 @@ neoPixelColors color  - Color to set the targets to (from the neoPixelColors enu
 */
 void MET::setAllTargetColor(neoPixelColors color){
   if(VERBOSE){
-    Serial.print("All Targets:");
-    switch(color){
-      case RED:
-        Serial.println(" RED");
-        break;
-
-      case GREEN:
-        Serial.println(" GREEN");
-        break;
-
-      case BLUE: 
-        Serial.println(" BLUE");
-        break;
-      
-      case YELLOW:
-        Serial.println(" YELLOW");
-        break;
-      
-      case CYAN:
-        Serial.println(" CYAN");
-        break;
-      
-      case MAGENTA:
-        Serial.println(" MAGENTA");
-        break;
-
-      case WHITE:
-        Serial.println(" WHITE");
-        break;
-
-      case OFF:
-        Serial.println(" OFF");
-        break;
-
-      default:
-        Serial.println(" Unknown Color Type");
-        break;
-    }
+    Serial.println("Set All Targets");
   }
-  strip.clear();
+
+  for(int i = 0; i < NUM_ROWS; i++){
+    strip[i] -> clear();
+  }
+
   for(int i = 1; i <= NUM_TARGETS; i++){
       setTargetColor(i, color, false);
   } 
@@ -207,7 +144,9 @@ None
 */
 void MET::displayTargets(){
   delay(50);
-  strip.show();
+  for(int i = 0; i < NUM_ROWS; i++){
+  strip[i] -> show();
+  }
 }
 
 /*
@@ -219,11 +158,17 @@ Parameters:
 unsigned long time    - How long to display the targets for (in Milliseconds)
 */
 void MET::displayTargets(unsigned long time){
-  delay(50);
-  strip.show();
+  for(int i = 0; i < NUM_ROWS; i++){
+  strip[i] -> show();
+  }
   delay(time);
-  strip.clear();
-  strip.show();
+  for(int i = 0; i < NUM_ROWS; i++){
+  strip[i] -> clear();
+  }
+
+  for(int i = 0; i < NUM_ROWS; i++){
+  strip[i] -> show();
+  }
 }
  
 /*
@@ -236,11 +181,14 @@ unsigned long time    - How long to display the target for (in Milliseconds)
 int target            - Target to display (Indexed at 1 to match physical target number)
 */
  void MET::displaySpecificTarget(unsigned long time, int target){
-  delay(50);
-  strip.show();
+  for(int i = 0; i < NUM_ROWS; i++){
+  strip[i] -> show();
+  }
   delay(time);
   setTargetColor(target, OFF, false);
-  strip.show();
+  for(int i = 0; i < NUM_ROWS; i++){
+  strip[i] -> show();
+  }
  }
 
 /*
@@ -252,10 +200,61 @@ Parameters:
 NONE
 */
 void MET::turnOffTargets(){
-  strip.clear();
-  strip.show();
+  for(int i = 0; i < NUM_ROWS; i++){
+  strip[i] -> clear();
+  }
+  for(int i = 0; i < NUM_ROWS; i++){
+  strip[i] -> show();
+  }
 }
 
+/*
+void printColor(neoPixelColors color)
+Helper function to display which color is used in plain-text
+
+Parameters:
+neoPixelColors color - Color to print
+*/
+void MET::printColor(neoPixelColors color){
+
+  switch(color){
+    case RED:
+      Serial.println(" RED");
+      break;
+
+    case GREEN:
+      Serial.println(" GREEN");
+      break;
+
+    case BLUE: 
+      Serial.println(" BLUE");
+      break;
+    
+    case YELLOW:
+      Serial.println(" YELLOW");
+      break;
+    
+    case CYAN:
+      Serial.println(" CYAN");
+      break;
+    
+    case MAGENTA:
+      Serial.println(" MAGENTA");
+      break;
+
+    case WHITE:
+      Serial.println(" WHITE");
+      break;
+
+    case OFF:
+      Serial.println(" OFF");
+      break;
+
+    default:
+      Serial.println(" Unknown Color Type");
+      break;
+  }
+}
 /*
 ****************************************************************************************
 Functions in charge of logic for the game modes
@@ -283,23 +282,17 @@ void MET::quickDraw(){
     Serial.println("Gamemode: #1 - Quick Draw");
   }
   randomSeed(analogRead(0));
-  int bullseye1 = TrueRandom.random(1, NUM_TARGETS + 1);
-  int bullseye2 = -1;
-  do{
-    randomSeed(analogRead(0));
-    bullseye2 = TrueRandom.random(3, NUM_TARGETS + 1);
-    
-  }while(bullseye2 %)
+  int bullseye = TrueRandom.random(1, NUM_TARGETS + 1);
+  setTargetColor(bullseye, GREEN, true);
   displayTargets();
   
   int targetHit = -1;
   while(!timeUp){
     updateTimerThread(&timerThread);
     targetHit = readSensors(false);
-    if(targetHit != -1){
-      timeUp = true;
+    if(targetHit == bullseye){
+      break;
     }
-    delay(10);
   }
   setTargetColor(targetHit, RED, true);
   Serial.print("Target Hit: ");
@@ -308,7 +301,7 @@ void MET::quickDraw(){
   displayTargets();
 
   Serial.print("Final Time: ");
-  Serial.print((elapsedTime / 1000.0), 3);
+  Serial.print((elapsedTime / MILLI_IN_SECONDS), 3);
   Serial.println("s");
 
 }
@@ -379,7 +372,7 @@ void MET::blackout(){
  }
 
   Serial.print("Final Time: ");
-  Serial.print((elapsedTime / 1000.0), 3);
+  Serial.print((elapsedTime / MILLI_IN_SECONDS), 3);
   Serial.println("s");
 }
 
@@ -540,7 +533,8 @@ void MET::resetMET(){
   for(int i = 0; i < NUM_TARGETS; i++){
     target[i].currentStatus = LOW;
   }
-  strip.clear();
+  for(int i = 0; i < NUM_ROWS; i++)
+  strip[i] -> clear();
   timeUp = false;
 }
 

@@ -62,6 +62,9 @@ struct target_s {
 
   //Status of the piezosensor
   int currentStatus;
+
+  //Index of which row target is in
+  int rowIndex;
 };
 
 class MET {
@@ -94,6 +97,9 @@ private:
   void turnOffTargets();
   void displayTargets();
   void displayTargets(unsigned long);
+
+  void printColor(neoPixelColors);
+
   int readSensors(bool);
   bool allTargetsHit();
   void displaySpecificTarget(unsigned long, int);
