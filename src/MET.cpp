@@ -458,7 +458,105 @@ Both targets must be hit for next pair to light up.
 Scored after x seconds.
 */
 void MET::twin(){
+resetMET();
+  countMode = false;
+  countDownTime = RANDOM_TIME;
+  if(VERBOSE){
+    Serial.println("Gamemode: #5 - Twin Shot");
+    Serial.print("Time Limit: ");
+    Serial.print(countDownTime / MILLI_IN_SECONDS);
+    Serial.println("sec");
+  }
+  
+  static unsigned long prevTime = 0;
+  static unsigned long delta = 0;
+  int scoreCount = 0;
+  float timeoutSeconds = VERBOSE ? (TIMEOUT - TWIN_CALIBRATION) * 2: TIMEOUT * 2;
+  int counter = 0; 
+  int targetHit = -1;
+  bool hit1 = false;
+  bool hit2 = false;
 
+  while(!timeUp){
+    randomSeed(analogRead(0));
+    int bullseye1 = TrueRandom.random(1, NUM_TARGETS + 1);
+    setTargetColor(bullseye1, GREEN, true);
+    int bullseye2 = -1;
+    do{
+      randomSeed(analogRead(0));
+      bullseye2 = TrueRandom.random(1, NUM_TARGETS + 1);
+    } while(bullseye1 == bullseye2);
+    setTargetColor(bullseye2, GREEN, false);
+    displayTargets();
+
+    bool timeout = false;
+    
+
+    if(VERBOSE){
+      Serial.print("Bullseye 1: ");
+      Serial.println(bullseye1);
+      Serial.print("Bullseye 2: ");
+      Serial.println(bullseye2);
+      Serial.print("Score: ");
+      Serial.println(scoreCount);
+    }
+
+    prevTime = millis();
+    delta = 0;
+    targetHit = -1;
+    counter = 0;
+    hit1 = hit2 = false;
+
+    while((targetHit = readSensors(true))){
+      //Checks which targets are hit
+      if((targetHit == bullseye1 && hit1 == false) || (targetHit == bullseye2 && hit2 == false)){
+        if(targetHit == bullseye1){
+          hit1 = true;
+        }
+        else{
+          hit2 = true;
+        }
+
+        if(++counter == 2){
+          setTargetColor(targetHit, RED, true);
+          displayTargets(100);
+          break;
+        }        
+        setTargetColor(targetHit, RED, false);
+        displayTargets();
+      }
+
+      unsigned long currentTime = millis();
+      //Time calculations for timeouts
+      if(currentTime >= prevTime){
+        delta = (currentTime - prevTime);
+      }
+      else{
+        //Handel overflow scenario
+        delta = ((4294967295 - prevTime) + currentTime + 1);
+      }
+      if(delta > (timeoutSeconds * MILLI_IN_SECONDS)){
+        timeout = true;
+        break;
+      }
+
+      //runs timer thread
+      updateTimerThread(&timerThread);
+      if(timeUp)
+        break;
+    }
+    if(VERBOSE){
+      Serial.print("Timed Out: ");
+      Serial.println(timeout ? "True" : "False");
+    }
+
+    if(!timeUp && !timeout){
+      scoreCount++;
+    }
+  }
+  turnOffTargets();
+  Serial.print("Score: ");
+  Serial.println(scoreCount);
 }
 
 /*

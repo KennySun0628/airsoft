@@ -16,7 +16,7 @@ Game Modes:
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(57600);
-  m.run(3);
+  m.run(5);
 }
 
 void loop() {
