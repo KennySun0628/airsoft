@@ -7,7 +7,7 @@
 #include <Chrono.h>
 #include <pt.h>
 
-#define VERBOSE true 
+#define VERBOSE false 
 
 #define MILLI_IN_SECONDS 1000.0
 
@@ -31,7 +31,7 @@
 #define TWIN_TIME 8000.0
 
 //Score count for Search and Destroy
-#define SD_SCORE 15
+#define SD_SCORE 5
 
 //Time between automatic target change for Random and Twin gamemodes
 #define TIMEOUT 1.5f
@@ -107,4 +107,5 @@ private:
   void displaySpecificTarget(unsigned long, int);
   void resetMET();
   int updateTimerThread(pt* pt1);
+  void delayTimer(unsigned long);
 };

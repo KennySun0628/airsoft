@@ -17,7 +17,7 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(57600);
   MET m;
-  m.run(3);
+  m.run(4);
 }
 
 void loop() {

@@ -160,7 +160,7 @@ Parameters:
 None
 */
 void MET::displayTargets(){
-  delay(50);
+  delay(10);
   for(int i = 0; i < NUM_ROWS; i++){
   strip[i] -> show();
   }
@@ -178,7 +178,7 @@ void MET::displayTargets(unsigned long time){
   for(int i = 0; i < NUM_ROWS; i++){
   strip[i] -> show();
   }
-  delay(time);
+  delayTimer(time);
   for(int i = 0; i < NUM_ROWS; i++){
   strip[i] -> clear();
   }
@@ -201,7 +201,7 @@ int target            - Target to display (Indexed at 1 to match physical target
   for(int i = 0; i < NUM_ROWS; i++){
   strip[i] -> show();
   }
-  delay(time);
+  delayTimer(time);
   setTargetColor(target, OFF, false);
   for(int i = 0; i < NUM_ROWS; i++){
   strip[i] -> show();
@@ -457,10 +457,10 @@ void MET::random(){
     }
 
     if(!timeUp && !timeout){
-      setTargetColor(bullseye, RED,  true);
-      displayTargets(800);
       scoreCount++;
     }
+    setTargetColor(bullseye, RED,  true);
+    displayTargets(200);
   }
   turnOffTargets();
   Serial.print("Score: ");
@@ -703,4 +703,24 @@ int MET::updateTimerThread(struct pt* pt1){
     PT_YIELD(pt1);
   }
   PT_END(pt1);
+}
+
+void MET::delayTimer(unsigned long delayTime){
+  unsigned long prevTime = millis();
+  unsigned long delta = 0;
+  
+  while(delta < delayTime){
+    
+    unsigned long currentTime = millis();
+
+    if (currentTime >= prevTime) {
+    delta = currentTime - prevTime;
+    } 
+    else {
+    // handle overflow scenario
+    delta = (4294967295 - prevTime) + currentTime + 1;
+    }
+    
+    updateTimerThread(&timerThread);
+  }
 }
