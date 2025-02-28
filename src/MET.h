@@ -7,7 +7,7 @@
 #include <Chrono.h>
 #include <pt.h>
 
-#define VERBOSE false 
+#define VERBOSE true 
 
 #define MILLI_IN_SECONDS 1000.0
 
@@ -15,21 +15,23 @@
 #define TARGET_LED_PIN 13
 
 //Number of LEDs per Target
-#define TARGET_NUM_LED 1
+#define TARGET_NUM_LED 4
 
 //Number of Targets in the grid
 #define NUM_TARGETS 2 
 
 //Number of Rows of LEDs
-#define NUM_ROWS 1
+#define NUM_ROWS 2 
 
 //LED brightness
 #define LED_BRIGHTNESS 150
 
 //Timer for the Game Modes (in milliseconds)
-#define SD_TIME 8000.0
 #define RANDOM_TIME 8000.0
 #define TWIN_TIME 8000.0
+
+//Score count for Search and Destroy
+#define SD_SCORE 15
 
 //Time between automatic target change for Random and Twin gamemodes
 #define TIMEOUT 1.5f
