@@ -10,7 +10,7 @@ using namespace std;
 MET::MET(){
   PT_INIT(&timerThread);
   int targetsRemaining = NUM_TARGETS;
-  const int targetsPerStrip = NUM_TARGETS / NUM_ROWS;
+  const int targetsPerStrip = (NUM_TARGETS % NUM_ROWS) == 0 ? NUM_TARGETS / NUM_ROWS : (NUM_TARGETS / NUM_ROWS) + 1;
 
   //initialize each row of LEDs
   for(int i = 0; i < NUM_ROWS; i++){
@@ -162,7 +162,7 @@ None
 void MET::displayTargets(){
   delay(10);
   for(int i = 0; i < NUM_ROWS; i++){
-  strip[i] -> show();
+    strip[i] -> show();
   }
 }
 
@@ -176,15 +176,15 @@ unsigned long time    - How long to display the targets for (in Milliseconds)
 */
 void MET::displayTargets(unsigned long time){
   for(int i = 0; i < NUM_ROWS; i++){
-  strip[i] -> show();
+    strip[i] -> show();
   }
   delayTimer(time);
   for(int i = 0; i < NUM_ROWS; i++){
-  strip[i] -> clear();
+    strip[i] -> clear();
   }
 
   for(int i = 0; i < NUM_ROWS; i++){
-  strip[i] -> show();
+    strip[i] -> show();
   }
 }
  
@@ -199,12 +199,12 @@ int target            - Target to display (Indexed at 1 to match physical target
 */
  void MET::displaySpecificTarget(unsigned long time, int target){
   for(int i = 0; i < NUM_ROWS; i++){
-  strip[i] -> show();
+    strip[i] -> show();
   }
   delayTimer(time);
   setTargetColor(target, OFF, false);
   for(int i = 0; i < NUM_ROWS; i++){
-  strip[i] -> show();
+    strip[i] -> show();
   }
  }
 
@@ -218,10 +218,10 @@ NONE
 */
 void MET::turnOffTargets(){
   for(int i = 0; i < NUM_ROWS; i++){
-  strip[i] -> clear();
+    strip[i] -> clear();
   }
   for(int i = 0; i < NUM_ROWS; i++){
-  strip[i] -> show();
+    strip[i] -> show();
   }
 }
 
