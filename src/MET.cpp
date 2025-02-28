@@ -27,20 +27,21 @@ MET::MET(){
     }
     //initialize every target that belongs in this row
     for(int j = 0; j < ((targetsRemaining > targetsPerStrip) ? targetsPerStrip : targetsRemaining); j++){
-      target[j].SENSOR_PIN = ((targetsPerStrip * i) + j + 3);
+      int targetNumber = (targetsPerStrip * i) + j;
+      target[targetNumber].SENSOR_PIN = (targetNumber + 3);
       if(VERBOSE){
         Serial.print("Target Index: ");
         Serial.println(j);
         Serial.print("Target Number: ");
-        Serial.println(((targetsPerStrip * i) + j) + 1);
+        Serial.println(targetNumber + 1);
         Serial.print("Sensor Pinout: ");
-        Serial.println(((targetsPerStrip * i) + j) + 3);
+        Serial.println(targetNumber + 3);
       }
       pinMode(target[i].SENSOR_PIN, INPUT);
-      target[j].currentStatus = LOW;
-      target[j].rowIndex = i;
-      target[j].startingLedIndex = j * TARGET_NUM_LED;
-      target[j].endingLedIndex =  target[j].startingLedIndex + (TARGET_NUM_LED - 1);
+      target[targetNumber].currentStatus = LOW;
+      target[targetNumber].rowIndex = i;
+      target[targetNumber].startingLedIndex = j * TARGET_NUM_LED;
+      target[targetNumber].endingLedIndex =  target[targetNumber].startingLedIndex + (TARGET_NUM_LED - 1);
     }
     //Number of targets remaining gets decremented after every loop by the amount per strip   
     targetsRemaining -= targetsPerStrip;
@@ -374,7 +375,6 @@ void MET::blackout(){
   Serial.println("Gamemode: #3 - Blackout");
  }
  countMode = true;
- 
  setAllTargetColor(GREEN);
  displayTargets();
 
