@@ -160,7 +160,7 @@ Parameters:
 None
 */
 void MET::displayTargets(){
-  delay(10);
+  delayTimer(10);
   for(int i = 0; i < NUM_ROWS; i++){
     strip[i] -> show();
   }
