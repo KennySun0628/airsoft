@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include "MET.h"
 
-MET m;
+
 /*
 ****************************************************************************************
 Game Modes:
@@ -16,7 +16,8 @@ Game Modes:
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(57600);
-  m.run(5);
+  MET m;
+  m.run(3);
 }
 
 void loop() {

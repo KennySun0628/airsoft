@@ -17,13 +17,25 @@ MET::MET(){
     //Ternary statements check if there are more total targets remaining than the amount of targets there should be in each strip
     //If there true, use the number of targest per strip
     //If false, uses number of targets remaining. This accounts for remainders if NUM_TARGETS is not evenly divisible by NUM_ROWS
-    strip[i] = new Adafruit_NeoPixel( (targetsRemaining > targetsPerStrip) ? targetsPerStrip * TARGET_NUM_LED : targetsRemaining * TARGET_NUM_LED, TARGET_LED_PIN - i, NEO_GRB + NEO_KHZ800);
+    strip[i] = new Adafruit_NeoPixel( (targetsRemaining > targetsPerStrip) ? (targetsPerStrip * TARGET_NUM_LED) : (targetsRemaining * TARGET_NUM_LED), (TARGET_LED_PIN - i), NEO_GRB + NEO_KHZ800);
     strip[i] -> setBrightness(LED_BRIGHTNESS);
     strip[i] -> begin();
     
+    if(VERBOSE){
+      Serial.print("Row Index: ");
+      Serial.println(i);
+    }
     //initialize every target that belongs in this row
-    for(int j = i * targetsPerStrip; j < (i * targetsPerStrip) + ((targetsRemaining > targetsPerStrip) ? targetsPerStrip : targetsRemaining); j++){
-      target[j].SENSOR_PIN = (j + 3);
+    for(int j = 0; j < ((targetsRemaining > targetsPerStrip) ? targetsPerStrip : targetsRemaining); j++){
+      target[j].SENSOR_PIN = ((targetsPerStrip * i) + j + 3);
+      if(VERBOSE){
+        Serial.print("Target Index: ");
+        Serial.println(j);
+        Serial.print("Target Number: ");
+        Serial.println(((targetsPerStrip * i) + j) + 1);
+        Serial.print("Sensor Pinout: ");
+        Serial.println(((targetsPerStrip * i) + j) + 3);
+      }
       pinMode(target[i].SENSOR_PIN, INPUT);
       target[j].currentStatus = LOW;
       target[j].rowIndex = i;
@@ -101,8 +113,12 @@ void MET::setTargetColor(int targetNum, neoPixelColors color, bool clearStrip){
   }
 
   //Clears buffer if true; resets the status of all other leds
-  if(clearStrip) 
-    strip[target[targetNum- 1].rowIndex] -> clear();
+  if(clearStrip){ 
+    for(int i = 0; i < NUM_ROWS; i++){
+      strip[i] -> clear();
+
+    }
+  }
   /*
   Implement get column and get row functions:
   getColumn = (targetNum + (NUM_ROW - 1)) % NUM_ROW
@@ -295,8 +311,10 @@ void MET::quickDraw(){
     }
   }
   setTargetColor(targetHit, RED, true);
-  Serial.print("Target Hit: ");
-  Serial.println(targetHit); 
+  if(VERBOSE){
+    Serial.print("Target Hit: ");
+    Serial.println(targetHit); 
+  }
   
   displayTargets();
 
@@ -315,8 +333,8 @@ Timed till x targets hit.
 */
 void MET::SD(){
   resetMET();
-  countMode = false;
-  countDownTime = SD_TIME;
+  countMode = true;
+
   if(VERBOSE){
     Serial.println("Gamemode: #2 - Search and Destroy");
     Serial.print("Time Limit: ");
@@ -325,7 +343,7 @@ void MET::SD(){
   }
   int scoreCount = 0;
 
-  while(!timeUp){
+  while(scoreCount < SD_SCORE){
     randomSeed(analogRead(0));
     int bullseye = TrueRandom.random(1, NUM_TARGETS + 1);
     setTargetColor(bullseye, GREEN, true);
@@ -333,19 +351,16 @@ void MET::SD(){
 
     while(readSensors(true) != bullseye){
       updateTimerThread(&timerThread);
-      if(timeUp)
-        break;
     }
 
-    if(!timeUp){
       setTargetColor(bullseye, RED, true);
-      displayTargets(800);
+      displayTargets(200);
       scoreCount++;
-    }
   }
   turnOffTargets();
-  Serial.print("Score: ");
-  Serial.println(scoreCount);
+  Serial.print("Final Time: ");
+  Serial.print((elapsedTime / MILLI_IN_SECONDS), 3);
+  Serial.println("s");
 }
 
 /*
@@ -359,6 +374,7 @@ void MET::blackout(){
   Serial.println("Gamemode: #3 - Blackout");
  }
  countMode = true;
+ 
  setAllTargetColor(GREEN);
  displayTargets();
 
