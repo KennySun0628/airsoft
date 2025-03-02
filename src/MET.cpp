@@ -37,7 +37,7 @@ MET::MET(){
         Serial.print("Sensor Pinout: ");
         Serial.println(targetNumber + 3);
       }
-      pinMode(target[i].SENSOR_PIN, INPUT);
+      pinMode(target[targetNumber].SENSOR_PIN, INPUT);
       target[targetNumber].currentStatus = LOW;
       target[targetNumber].rowIndex = i;
       target[targetNumber].startingLedIndex = j * TARGET_NUM_LED;
@@ -112,6 +112,10 @@ void MET::setTargetColor(int targetNum, neoPixelColors color, bool clearStrip){
     Serial.print(targetNum);
     printColor(color);
   }
+  
+  //check bounds
+  if(targetNum < 1 || targetNum > NUM_TARGETS)
+    return;
 
   //Clears buffer if true; resets the status of all other leds
   if(clearStrip){ 
@@ -175,17 +179,9 @@ Parameters:
 unsigned long time    - How long to display the targets for (in Milliseconds)
 */
 void MET::displayTargets(unsigned long time){
-  for(int i = 0; i < NUM_ROWS; i++){
-    strip[i] -> show();
-  }
+  displayTargets();
   delayTimer(time);
-  for(int i = 0; i < NUM_ROWS; i++){
-    strip[i] -> clear();
-  }
-
-  for(int i = 0; i < NUM_ROWS; i++){
-    strip[i] -> show();
-  }
+  turnOffTargets();
 }
  
 /*
@@ -219,8 +215,6 @@ NONE
 void MET::turnOffTargets(){
   for(int i = 0; i < NUM_ROWS; i++){
     strip[i] -> clear();
-  }
-  for(int i = 0; i < NUM_ROWS; i++){
     strip[i] -> show();
   }
 }
