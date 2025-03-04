@@ -596,6 +596,7 @@ int MET::readSensors(bool reset){
         target[i].currentStatus = HIGH;
       }
       targetNum = i + 1;
+      delayTimer(50);
       return targetNum;
     }
   }
