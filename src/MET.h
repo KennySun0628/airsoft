@@ -83,6 +83,7 @@ private:
   unsigned long elapsedTime = 0.0;
   unsigned long countDownTime = 0.0;
   bool countMode; //True = count up; False = count down
+  bool resetLastMillisFlag = true;
 
   
   target_s target[NUM_TARGETS];
@@ -108,4 +109,5 @@ private:
   void resetMET();
   int updateTimerThread(pt* pt1);
   void delayTimer(unsigned long);
+  void resetTimer();
 };
