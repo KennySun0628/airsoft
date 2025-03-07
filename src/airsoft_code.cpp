@@ -25,7 +25,7 @@ MET* m;
 
 int lastClockState = LOW;  // Track the last state of the CLOCK pin
 unsigned long lastDebounceTime = 0;  // Last time the state changed
-unsigned long debounceDelay = 50;  // Debounce delay (in milliseconds)
+unsigned long debounceDelay = 100;  // Debounce delay (in milliseconds)
 
 
 void encoderISR() {

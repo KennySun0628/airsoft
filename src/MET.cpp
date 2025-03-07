@@ -644,7 +644,7 @@ void MET::resetMET(){
   }
   for(int i = 0; i < NUM_ROWS; i++)
   strip[i] -> clear();
-  timeUp = false;
+  resetTimer();
 }
 
 /*
@@ -661,12 +661,18 @@ int MET::updateTimerThread(struct pt* pt1){
   PT_BEGIN(pt1);
   
   //Track the last update time
-  static unsigned long lastMillis = millis();
+  static unsigned long lastMillis;
+  
   static unsigned long deltaTime = 0;
   static unsigned long timeRemain = countDownTime;
   while(!timeUp){
     unsigned long currentMillis = millis();
-
+    if(resetLastMillisFlag == true){
+        lastMillis = millis();
+        elapsedTime = 0;
+        timeRemain = countDownTime;
+        resetLastMillisFlag = false;
+      }
     if (currentMillis >= lastMillis) {
     deltaTime = currentMillis - lastMillis;
     } 
@@ -718,4 +724,9 @@ void MET::delayTimer(unsigned long delayTime){
     
     updateTimerThread(&timerThread);
   }
+}
+
+void MET::resetTimer(){
+  resetLastMillisFlag = true;
+  timeUp = false;
 }
