@@ -11,9 +11,6 @@
 
 #define MILLI_IN_SECONDS 1000.0
 
-//Largets pin for target leds strips **decremented for successive strips**
-#define TARGET_LED_PIN 13
-
 //Number of LEDs per Target
 #define TARGET_NUM_LED 4
 
@@ -39,6 +36,11 @@
 //Calibration time used for synchronizing timeout time calculations (to account for internal function calls)
 #define RANDOM_CALIBRATION 0.109f
 #define TWIN_CALIBRATION 0.2f
+ 
+//Amount of pin-outs on a nodemcu-32s esp32
+#define PIN_COUNT  32
+//array of GPIO pin numbers on a nodemcu-32s esp32
+const int pinArray[PIN_COUNT] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39};
 
 enum neoPixelColors {
   RED   = 0xFF0000,
@@ -84,7 +86,7 @@ private:
   unsigned long countDownTime = 0.0;
   bool countMode; //True = count up; False = count down
   bool resetLastMillisFlag = true;
-
+ 
   
   target_s target[NUM_TARGETS];
   Adafruit_NeoPixel* strip[NUM_ROWS];
