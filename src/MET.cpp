@@ -12,12 +12,17 @@ MET::MET(){
   int targetsRemaining = NUM_TARGETS;
   const int targetsPerStrip = (NUM_TARGETS % NUM_ROWS) == 0 ? NUM_TARGETS / NUM_ROWS : (NUM_TARGETS / NUM_ROWS) + 1;
 
+  if((NUM_TARGETS + NUM_ROWS) > PIN_COUNT){
+    Serial.println("ERROR - NOT ENOUGH PINS");
+    return;
+  }
+
   //initialize each row of LEDs
   for(int i = 0; i < NUM_ROWS; i++){
     //Ternary statements check if there are more total targets remaining than the amount of targets there should be in each strip
     //If there true, use the number of targest per strip
     //If false, uses number of targets remaining. This accounts for remainders if NUM_TARGETS is not evenly divisible by NUM_ROWS
-    strip[i] = new Adafruit_NeoPixel( (targetsRemaining > targetsPerStrip) ? (targetsPerStrip * TARGET_NUM_LED) : (targetsRemaining * TARGET_NUM_LED), (TARGET_LED_PIN - i), NEO_GRB + NEO_KHZ800);
+    strip[i] = new Adafruit_NeoPixel( (targetsRemaining > targetsPerStrip) ? (targetsPerStrip * TARGET_NUM_LED) : (targetsRemaining * TARGET_NUM_LED), pinArray[i], NEO_GRB + NEO_KHZ800);
     strip[i] -> setBrightness(LED_BRIGHTNESS);
     strip[i] -> begin();
     
@@ -28,7 +33,7 @@ MET::MET(){
     //initialize every target that belongs in this row
     for(int j = 0; j < ((targetsRemaining > targetsPerStrip) ? targetsPerStrip : targetsRemaining); j++){
       int targetNumber = (targetsPerStrip * i) + j;
-      target[targetNumber].SENSOR_PIN = (targetNumber + 3);
+      target[targetNumber].SENSOR_PIN = pinArray[PIN_COUNT - (targetNumber + 1)];
       if(VERBOSE){
         Serial.print("Target Index: ");
         Serial.println(j);
