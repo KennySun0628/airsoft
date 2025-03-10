@@ -51,10 +51,12 @@ MET::MET(){
     //Number of targets remaining gets decremented after every loop by the amount per strip   
     targetsRemaining -= targetsPerStrip;
   }
+  resetMET();
 }
 
 //destructor
 MET::~MET(){
+  resetMET();
   for(int i = 0; i < NUM_ROWS; i++){
     delete strip[i];
     strip[i] = nullptr;
@@ -63,7 +65,8 @@ MET::~MET(){
 
 //Main function to facilitate modes changes
 void MET::run(int gameMode){
-  
+  startCountdown(); 
+  Serial.println("Start!");
 	switch (gameMode){
 		case 1:  
 			quickDraw();
@@ -299,7 +302,7 @@ void MET::quickDraw(){
   }
   randomSeed(analogRead(0));
   int bullseye = TrueRandom.random(1, NUM_TARGETS + 1);
-  setTargetColor(bullseye, GREEN, true);
+  setTargetColor(bullseye, ACTIVE_TARGET_COLOR, true);
   displayTargets();
   
   int targetHit = -1;
@@ -321,7 +324,7 @@ void MET::quickDraw(){
   Serial.print("Final Time: ");
   Serial.print((elapsedTime / MILLI_IN_SECONDS), 3);
   Serial.println("s");
-
+  resetMET(); 
 }
 	
 /*
@@ -346,7 +349,7 @@ void MET::SD(){
   while(scoreCount < SD_SCORE){
     randomSeed(analogRead(0));
     int bullseye = TrueRandom.random(1, NUM_TARGETS + 1);
-    setTargetColor(bullseye, GREEN, true);
+    setTargetColor(bullseye, ACTIVE_TARGET_COLOR, true);
     displayTargets();
 
     while(readSensors(true) != bullseye){
@@ -361,6 +364,7 @@ void MET::SD(){
   Serial.print("Final Time: ");
   Serial.print((elapsedTime / MILLI_IN_SECONDS), 3);
   Serial.println("s");
+  resetMET(); 
 }
 
 /*
@@ -374,7 +378,7 @@ void MET::blackout(){
   Serial.println("Gamemode: #3 - Blackout");
  }
  countMode = true;
- setAllTargetColor(GREEN);
+ setAllTargetColor(ACTIVE_TARGET_COLOR);
  displayTargets();
 
  while(!allTargetsHit()){
@@ -389,6 +393,7 @@ void MET::blackout(){
   Serial.print("Final Time: ");
   Serial.print((elapsedTime / MILLI_IN_SECONDS), 3);
   Serial.println("s");
+  resetMET(); 
 }
 
 /*
@@ -417,7 +422,7 @@ void MET::random(){
   while(!timeUp){
     randomSeed(analogRead(0));
     int bullseye = TrueRandom.random(1, NUM_TARGETS + 1);
-    setTargetColor(bullseye, GREEN, true);
+    setTargetColor(bullseye, ACTIVE_TARGET_COLOR, true);
     displayTargets();
 
     bool timeout = false;
@@ -464,6 +469,7 @@ void MET::random(){
   turnOffTargets();
   Serial.print("Score: ");
   Serial.println(scoreCount);
+  resetMET(); 
 }
 
 /*
@@ -495,13 +501,13 @@ resetMET();
   while(!timeUp){
     randomSeed(analogRead(0));
     int bullseye1 = TrueRandom.random(1, NUM_TARGETS + 1);
-    setTargetColor(bullseye1, GREEN, true);
+    setTargetColor(bullseye1, ACTIVE_TARGET_COLOR, true);
     int bullseye2 = -1;
     do{
       randomSeed(analogRead(0));
       bullseye2 = TrueRandom.random(1, NUM_TARGETS + 1);
     } while(bullseye1 == bullseye2);
-    setTargetColor(bullseye2, GREEN, false);
+    setTargetColor(bullseye2, ACTIVE_TARGET_COLOR, false);
     displayTargets();
 
     bool timeout = false;
@@ -572,6 +578,7 @@ resetMET();
   turnOffTargets();
   Serial.print("Score: ");
   Serial.println(scoreCount);
+  resetMET(); 
 }
 
 /*
@@ -601,7 +608,7 @@ int MET::readSensors(bool reset){
         target[i].currentStatus = HIGH;
       }
       targetNum = i + 1;
-      delayTimer(50);
+      delayTimer(DEBOUNCE);
       return targetNum;
     }
   }
@@ -644,12 +651,14 @@ Parameters:
 NONE
 */
 void MET::resetMET(){
+  turnOffTargets();
   for(int i = 0; i < NUM_TARGETS; i++){
     target[i].currentStatus = LOW;
   }
   for(int i = 0; i < NUM_ROWS; i++)
   strip[i] -> clear();
-  resetTimer();
+  timeUp = false;
+  timerResetFlag = true;
 }
 
 /*
@@ -672,11 +681,12 @@ int MET::updateTimerThread(struct pt* pt1){
   static unsigned long timeRemain = countDownTime;
   while(!timeUp){
     unsigned long currentMillis = millis();
-    if(resetLastMillisFlag == true){
+    if(timerResetFlag == true){
         lastMillis = millis();
         elapsedTime = 0;
         timeRemain = countDownTime;
-        resetLastMillisFlag = false;
+        timeUp = false;
+        timerResetFlag = false;
       }
     if (currentMillis >= lastMillis) {
     deltaTime = currentMillis - lastMillis;
@@ -731,7 +741,23 @@ void MET::delayTimer(unsigned long delayTime){
   }
 }
 
-void MET::resetTimer(){
-  resetLastMillisFlag = true;
-  timeUp = false;
+void MET::startCountdown(){
+  resetMET();
+  countDownTime = START_COUNTDOWN;
+  if(VERBOSE){
+    Serial.println("COUNTDOWN");
+    Serial.println(countDownTime);
+  }
+  countMode = false;
+  while(!timeUp){
+    setAllTargetColor(RED);
+    displayTargets((countDownTime / 3));
+    setAllTargetColor(YELLOW);
+    displayTargets((countDownTime / 3));
+    setAllTargetColor(LGREEN);
+    displayTargets((countDownTime / 3));
+  }
+  turnOffTargets();
+  delay(30);
+  resetMET();
 }
