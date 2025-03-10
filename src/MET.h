@@ -9,13 +9,19 @@
 
 #define VERBOSE false 
 
+//Count down time before game
+#define START_COUNTDOWN 3000.0
+
+//Debounce time between sensor reads
+#define DEBOUNCE 50
+
 #define MILLI_IN_SECONDS 1000.0
 
 //Number of LEDs per Target
 #define TARGET_NUM_LED 4
 
 //Number of Targets in the grid
-#define NUM_TARGETS 2 
+#define NUM_TARGETS 4 
 
 //Number of Rows of LEDs
 #define NUM_ROWS 2 
@@ -43,15 +49,20 @@
 const int pinArray[PIN_COUNT] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39};
 
 enum neoPixelColors {
-  RED   = 0xFF0000,
-  GREEN = 0x00FF00,
-  BLUE  = 0x0000FF,
-  YELLOW = 0xFFFF00,
-  CYAN  = 0x00FFFF,
+  RED     = 0xFF0000,
+  ORANGE  = 0xFFA500,
+  GREEN   = 0x00FF00,
+  LGREEN  = 0x44FF44,
+  BLUE    = 0x0000FF,
+  YELLOW  = 0xFFFF00,
+  CYAN    = 0x00FFFF,
   MAGENTA = 0xFF00FF,
-  WHITE = 0xFFFFFF,
-  OFF   = 0x000000
+  PURPLE  = 0xBF40BF,
+  WHITE   = 0xFFFFFF,
+  OFF     = 0x000000
 };
+
+#define ACTIVE_TARGET_COLOR GREEN 
 
 
 struct target_s {
@@ -80,13 +91,13 @@ public:
 
 private:
   struct pt timerThread;
-  bool timeUp;
+  bool timeUp = false;
   unsigned long startTime;
   unsigned long elapsedTime = 0.0;
   unsigned long countDownTime = 0.0;
   bool countMode; //True = count up; False = count down
   bool resetLastMillisFlag = true;
- 
+
   
   target_s target[NUM_TARGETS];
   Adafruit_NeoPixel* strip[NUM_ROWS];
@@ -111,5 +122,5 @@ private:
   void resetMET();
   int updateTimerThread(pt* pt1);
   void delayTimer(unsigned long);
-  void resetTimer();
+  void startCountdown();
 };
