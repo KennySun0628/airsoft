@@ -2,38 +2,77 @@
 //Implementation for MET class
 //Kenny Sun
 
-#include <TrueRandom.h>
 #include "MET.h"
 using namespace std;
 
 //Constructor
 MET::MET(){
+  
   PT_INIT(&timerThread);
   int targetsRemaining = NUM_TARGETS;
   const int targetsPerStrip = (NUM_TARGETS % NUM_ROWS) == 0 ? NUM_TARGETS / NUM_ROWS : (NUM_TARGETS / NUM_ROWS) + 1;
+  int pin = -1;
 
   if((NUM_TARGETS + NUM_ROWS) > PIN_COUNT){
     Serial.println("ERROR - NOT ENOUGH PINS");
     return;
   }
-
   //initialize each row of LEDs
   for(int i = 0; i < NUM_ROWS; i++){
     //Ternary statements check if there are more total targets remaining than the amount of targets there should be in each strip
     //If there true, use the number of targest per strip
     //If false, uses number of targets remaining. This accounts for remainders if NUM_TARGETS is not evenly divisible by NUM_ROWS
-    strip[i] = new Adafruit_NeoPixel( (targetsRemaining > targetsPerStrip) ? (targetsPerStrip * TARGET_NUM_LED) : (targetsRemaining * TARGET_NUM_LED), pinArray[i], NEO_GRB + NEO_KHZ800);
-    strip[i] -> setBrightness(LED_BRIGHTNESS);
-    strip[i] -> begin();
-    
+    if (i >= 0 && i < PIN_COUNT) {
+      // Safe to access pinArray[i]
+      pin = pinArray[i];
+      if(VERBOSE){
+        Serial.print("Pin: ");
+        Serial.println(pin);
+        delay(100);
+      }
+    } 
+    else {
+      Serial.println("Pin Array Out of Bounds Error");
+      delay(100);
+      return;
+    }
+
+    if(pin != -1){
+      strip[i] = new Adafruit_NeoPixel( (targetsRemaining > targetsPerStrip) ? (targetsPerStrip * TARGET_NUM_LED) : (targetsRemaining * TARGET_NUM_LED), pin, NEO_GRB + NEO_KHZ800);
+      if(VERBOSE){
+        Serial.println("Neopixel Strip Created");
+        Serial.print("Free Heap: ");
+        Serial.println(ESP.getFreeHeap());
+        delay(100);
+      }
+      strip[i] -> setBrightness(LED_BRIGHTNESS);
+      if(VERBOSE){
+        Serial.println("Neopixel Brightness Set");
+        delay(100);
+      }
+      strip[i] -> begin();
+      if(VERBOSE){
+        Serial.println("Neopixel Strip Began");
+        delay(100);
+      }
+    }
+
     if(VERBOSE){
       Serial.print("Row Index: ");
       Serial.println(i);
+      delay(100);
     }
     //initialize every target that belongs in this row
     for(int j = 0; j < ((targetsRemaining > targetsPerStrip) ? targetsPerStrip : targetsRemaining); j++){
       int targetNumber = (targetsPerStrip * i) + j;
-      target[targetNumber].SENSOR_PIN = pinArray[PIN_COUNT - (targetNumber + 1)];
+      
+      if (targetNumber >= NUM_TARGETS) {
+        Serial.println("ERROR: Target number out of bounds!");
+        delay(100);
+        return; 
+      }
+
+      //target[targetNumber].SENSOR_PIN = pinArray[PIN_COUNT - (targetNumber + 1)];
       if(VERBOSE){
         Serial.print("Target Index: ");
         Serial.println(j);
@@ -41,22 +80,26 @@ MET::MET(){
         Serial.println(targetNumber + 1);
         Serial.print("Sensor Pinout: ");
         Serial.println(targetNumber + 3);
+        delay(100);
       }
-      pinMode(target[targetNumber].SENSOR_PIN, INPUT);
+      //pinMode(target[targetNumber].SENSOR_PIN, INPUT);
+      
       target[targetNumber].currentStatus = LOW;
       target[targetNumber].rowIndex = i;
       target[targetNumber].startingLedIndex = j * TARGET_NUM_LED;
       target[targetNumber].endingLedIndex =  target[targetNumber].startingLedIndex + (TARGET_NUM_LED - 1);
+      
+
     }
     //Number of targets remaining gets decremented after every loop by the amount per strip   
     targetsRemaining -= targetsPerStrip;
   }
-  resetMET();
+  //resetMET();
 }
 
 //destructor
 MET::~MET(){
-  resetMET();
+  //resetMET();
   for(int i = 0; i < NUM_ROWS; i++){
     delete strip[i];
     strip[i] = nullptr;
@@ -300,8 +343,8 @@ void MET::quickDraw(){
   if(VERBOSE){
     Serial.println("Gamemode: #1 - Quick Draw");
   }
-  randomSeed(analogRead(0));
-  int bullseye = TrueRandom.random(1, NUM_TARGETS + 1);
+ 
+  int bullseye = generateRandom(NUM_TARGETS);
   setTargetColor(bullseye, ACTIVE_TARGET_COLOR, true);
   displayTargets();
   
@@ -347,8 +390,7 @@ void MET::SD(){
   int scoreCount = 0;
 
   while(scoreCount < SD_SCORE){
-    randomSeed(analogRead(0));
-    int bullseye = TrueRandom.random(1, NUM_TARGETS + 1);
+    int bullseye = generateRandom(NUM_TARGETS);
     setTargetColor(bullseye, ACTIVE_TARGET_COLOR, true);
     displayTargets();
 
@@ -420,8 +462,7 @@ void MET::random(){
   
 
   while(!timeUp){
-    randomSeed(analogRead(0));
-    int bullseye = TrueRandom.random(1, NUM_TARGETS + 1);
+    int bullseye = generateRandom(NUM_TARGETS);
     setTargetColor(bullseye, ACTIVE_TARGET_COLOR, true);
     displayTargets();
 
@@ -499,13 +540,11 @@ resetMET();
   bool hit2 = false;
 
   while(!timeUp){
-    randomSeed(analogRead(0));
-    int bullseye1 = TrueRandom.random(1, NUM_TARGETS + 1);
+    int bullseye1 = generateRandom(NUM_TARGETS);
     setTargetColor(bullseye1, ACTIVE_TARGET_COLOR, true);
     int bullseye2 = -1;
     do{
-      randomSeed(analogRead(0));
-      bullseye2 = TrueRandom.random(1, NUM_TARGETS + 1);
+      bullseye2 = generateRandom(NUM_TARGETS);
     } while(bullseye1 == bullseye2);
     setTargetColor(bullseye2, ACTIVE_TARGET_COLOR, false);
     displayTargets();
@@ -760,4 +799,9 @@ void MET::startCountdown(){
   turnOffTargets();
   delay(30);
   resetMET();
+}
+
+int MET::generateRandom(int max){
+  randomSeed(esp_random());
+  return ::random(0, max + 1);
 }

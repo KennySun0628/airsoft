@@ -7,7 +7,7 @@
 #include <Chrono.h>
 #include <pt.h>
 
-#define VERBOSE false 
+#define VERBOSE true 
 
 //Count down time before game
 #define START_COUNTDOWN 3000.0
@@ -46,7 +46,7 @@
 //Amount of pin-outs on a nodemcu-32s esp32
 #define PIN_COUNT  32
 //array of GPIO pin numbers on a nodemcu-32s esp32
-const int pinArray[PIN_COUNT] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39};
+
 
 enum neoPixelColors {
   RED     = 0xFF0000,
@@ -97,9 +97,10 @@ private:
   unsigned long countDownTime = 0.0;
   bool countMode; //True = count up; False = count down
   bool timerResetFlag = true;
+  const int pinArray[PIN_COUNT] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39};
 
   
-  target_s target[NUM_TARGETS];
+  target_s target[NUM_TARGETS] = {};
   Adafruit_NeoPixel* strip[NUM_ROWS];
   void quickDraw();
   void SD();
@@ -123,4 +124,5 @@ private:
   int updateTimerThread(pt* pt1);
   void delayTimer(unsigned long);
   void startCountdown();
+  int generateRandom(int);
 };
