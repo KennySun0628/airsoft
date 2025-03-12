@@ -1,10 +1,12 @@
 //Sketch1.cpp
 #include <Arduino.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include "MET.h"
 
-#define CLOCK 2 
-#define DATA 9
-#define SWITCH 8
+#define CLOCK 18 
+#define DATA 19
+#define SWITCH 21
 /*
 ****************************************************************************************
 Game Modes:
@@ -54,24 +56,36 @@ void encoderISR() {
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(57600);
+  Serial.begin(115200);
+  delay(500);
+  Serial.println("Setup start");
+  delay(100);
+// Check the high water mark for stack usage
+  //Serial.print("FreeRTOS Stack High Water Mark: ");
+  //Serial.println(uxTaskGetStackHighWaterMark(NULL));
+
   pinMode(CLOCK, INPUT);
   pinMode(DATA, INPUT);
   pinMode(SWITCH, INPUT_PULLUP);
-  
-  m = new MET();
+  Serial.println("Pins initialized");
+  delay(100);
 
+  m = new MET();
+  Serial.println("MET created");
+
+  /*  
   attachInterrupt(digitalPinToInterrupt(CLOCK), encoderISR, CHANGE);
+  Serial.println("Interrupt Attached");
+
   Serial.print("Game Mode: ");
   Serial.println(gameMode); 
-  /*
-  m.run(3);
-  */
+ */ 
 }
 
 
 
 void loop() {
+  /*
   if (stateChanged) {  // If encoder changed state
     Serial.print("Game Mode: ");
     Serial.println(gameMode);
@@ -90,5 +104,9 @@ void loop() {
   if (digitalRead(SWITCH) == HIGH) {
     buttonPressed = false;  // Reset when button is released
   }
+  */
+
+  delay(1000);
+  Serial.println("Loop running");
 }
   
