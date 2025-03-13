@@ -21,7 +21,7 @@
 #define TARGET_NUM_LED 4
 
 //Number of Targets in the grid
-#define NUM_TARGETS 4 
+#define NUM_TARGETS 3 
 
 //Number of Rows of LEDs
 #define NUM_ROWS 2 
@@ -42,11 +42,10 @@
 //Calibration time used for synchronizing timeout time calculations (to account for internal function calls)
 #define RANDOM_CALIBRATION 0.109f
 #define TWIN_CALIBRATION 0.2f
- 
-//Amount of pin-outs on a nodemcu-32s esp32
-#define PIN_COUNT  32
-//array of GPIO pin numbers on a nodemcu-32s esp32
 
+#define OUTPUT_PIN_COUNT 6 
+#define INPUT_PIN_COUNT 16
+ 
 
 enum neoPixelColors {
   RED     = 0xFF0000,
@@ -97,7 +96,8 @@ private:
   unsigned long countDownTime = 0.0;
   bool countMode; //True = count up; False = count down
   bool timerResetFlag = true;
-  const int pinArray[PIN_COUNT] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39};
+  const int inputPins[INPUT_PIN_COUNT] = {2, 4, 12, 13, 14, 15, 16, 17, 25, 26, 32, 33, 34, 35, 36, 39};
+  const int outputPins[OUTPUT_PIN_COUNT] = {5, 22, 23, 25, 26, 27};
 
   
   target_s target[NUM_TARGETS] = {};
