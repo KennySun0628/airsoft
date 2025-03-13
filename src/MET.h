@@ -7,7 +7,7 @@
 #include <Chrono.h>
 #include <pt.h>
 
-#define VERBOSE true 
+#define VERBOSE false 
 
 //Count down time before game
 #define START_COUNTDOWN 3000.0
@@ -51,7 +51,7 @@ enum neoPixelColors {
   RED     = 0xFF0000,
   ORANGE  = 0xFFA500,
   GREEN   = 0x00FF00,
-  LGREEN  = 0x44FF44,
+  LGREEN  = 0x64FF3C,
   BLUE    = 0x0000FF,
   YELLOW  = 0xFFFF00,
   CYAN    = 0x00FFFF,
@@ -61,7 +61,7 @@ enum neoPixelColors {
   OFF     = 0x000000
 };
 
-#define ACTIVE_TARGET_COLOR GREEN 
+#define ACTIVE_TARGET_COLOR PURPLE 
 
 
 struct target_s {

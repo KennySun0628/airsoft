@@ -757,6 +757,17 @@ int MET::updateTimerThread(struct pt* pt1){
   PT_END(pt1);
 }
 
+/*
+void delayTimer(unsigned long delayTime)
+same as the arduino delay() function, but allows the timer protothread to continue in the background.
+*Doesn't stall displaying the timer*
+
+Return Type:
+void
+
+Parameters:
+unsigned long delayTime - time in milliseconds to delay for
+*/
 void MET::delayTimer(unsigned long delayTime){
   unsigned long prevTime = millis();
   unsigned long delta = 0;
@@ -777,6 +788,17 @@ void MET::delayTimer(unsigned long delayTime){
   }
 }
 
+/*
+void startCountdown()
+Sets a count down for (START_COUNTDOWN) milliseconds.
+All LEDs Displays Red -> Yellow -> Green to match timer.
+
+Return Type:
+void
+
+Parameters:
+NONE
+*/
 void MET::startCountdown(){
   resetMET();
   countDownTime = START_COUNTDOWN;
@@ -790,7 +812,7 @@ void MET::startCountdown(){
     displayTargets((countDownTime / 3));
     setAllTargetColor(YELLOW);
     displayTargets((countDownTime / 3));
-    setAllTargetColor(LGREEN);
+    setAllTargetColor(GREEN);
     displayTargets((countDownTime / 3));
   }
   turnOffTargets();
@@ -798,6 +820,16 @@ void MET::startCountdown(){
   resetMET();
 }
 
+/*
+int generateRandom(int max)
+Generates a pseudo-random number from 1 - max, reseeded every time.
+
+Return Type:
+int
+
+Parameters:
+int max - upper bound for the random generation
+*/
 int MET::generateRandom(int max){
   randomSeed(esp_random());
   return ::random(1, max + 1);
