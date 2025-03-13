@@ -13,8 +13,8 @@ MET::MET(){
   const int targetsPerStrip = (NUM_TARGETS % NUM_ROWS) == 0 ? NUM_TARGETS / NUM_ROWS : (NUM_TARGETS / NUM_ROWS) + 1;
   int pin = -1;
 
-  if((NUM_TARGETS + NUM_ROWS) > PIN_COUNT){
-    Serial.println("ERROR - NOT ENOUGH PINS");
+  if(NUM_ROWS > OUTPUT_PIN_COUNT){
+    Serial.println("ERROR - NOT ENOUGH OUTPUT PINS");
     return;
   }
   //initialize each row of LEDs
@@ -22,65 +22,67 @@ MET::MET(){
     //Ternary statements check if there are more total targets remaining than the amount of targets there should be in each strip
     //If there true, use the number of targest per strip
     //If false, uses number of targets remaining. This accounts for remainders if NUM_TARGETS is not evenly divisible by NUM_ROWS
-    if (i >= 0 && i < PIN_COUNT) {
+    if (i >= 0 && i < OUTPUT_PIN_COUNT) {
       // Safe to access pinArray[i]
-      pin = pinArray[i];
+      pin = outputPins[i];
       if(VERBOSE){
         Serial.print("Pin: ");
         Serial.println(pin);
-        delay(100);
       }
     } 
     else {
       Serial.println("Pin Array Out of Bounds Error");
-      delay(100);
       return;
     }
 
-    if(pin != -1){
+    if(pin == -1){
+      Serial.println("Invalid Output Pin Number");
+      return;
+    }
+    else{
       strip[i] = new Adafruit_NeoPixel( (targetsRemaining > targetsPerStrip) ? (targetsPerStrip * TARGET_NUM_LED) : (targetsRemaining * TARGET_NUM_LED), pin, NEO_GRB + NEO_KHZ800);
       if(VERBOSE){
         Serial.println("Neopixel Strip Created");
+        
+        Serial.print("LED Pin: ");
+        Serial.println(pin);
+
         Serial.print("Free Heap: ");
         Serial.println(ESP.getFreeHeap());
-        delay(100);
       }
+
       strip[i] -> setBrightness(LED_BRIGHTNESS);
       if(VERBOSE){
-        Serial.println("Neopixel Brightness Set");
-        delay(100);
+        Serial.print("Neopixel Brightness Set: ");
+        Serial.println(LED_BRIGHTNESS);
       }
       strip[i] -> begin();
       if(VERBOSE){
         Serial.println("Neopixel Strip Began");
-        delay(100);
       }
     }
 
     if(VERBOSE){
       Serial.print("Row Index: ");
       Serial.println(i);
-      delay(100);
     }
     //initialize every target that belongs in this row
     for(int j = 0; j < ((targetsRemaining > targetsPerStrip) ? targetsPerStrip : targetsRemaining); j++){
       int targetNumber = (targetsPerStrip * i) + j;
       
-      if (targetNumber >= NUM_TARGETS) {
+      if (targetNumber >= NUM_TARGETS || targetNumber >= INPUT_PIN_COUNT) {
         Serial.println("ERROR: Target number out of bounds!");
-        delay(100);
         return; 
       }
 
-      //target[targetNumber].SENSOR_PIN = pinArray[PIN_COUNT - (targetNumber + 1)];
+      target[targetNumber].SENSOR_PIN = inputPins[targetNumber];
       if(VERBOSE){
         Serial.print("Target Index: ");
         Serial.println(j);
         Serial.print("Target Number: ");
         Serial.println(targetNumber + 1);
         Serial.print("Sensor Pinout: ");
-        Serial.println(targetNumber + 3);
-        delay(100);
+        Serial.println(target[targetNumber].SENSOR_PIN);
       }
       //pinMode(target[targetNumber].SENSOR_PIN, INPUT);
       
@@ -94,12 +96,12 @@ MET::MET(){
     //Number of targets remaining gets decremented after every loop by the amount per strip   
     targetsRemaining -= targetsPerStrip;
   }
-  //resetMET();
+  resetMET();
 }
 
 //destructor
 MET::~MET(){
-  //resetMET();
+  resetMET();
   for(int i = 0; i < NUM_ROWS; i++){
     delete strip[i];
     strip[i] = nullptr;
@@ -110,6 +112,7 @@ MET::~MET(){
 void MET::run(int gameMode){
   startCountdown(); 
   Serial.println("Start!");
+  
 	switch (gameMode){
 		case 1:  
 			quickDraw();
@@ -124,8 +127,6 @@ void MET::run(int gameMode){
 			random();
 			break;
 		case 5:
-      countMode = false;
-      countDownTime = TWIN_TIME;
 			twin();
 			break;
 	}
@@ -175,11 +176,7 @@ void MET::setTargetColor(int targetNum, neoPixelColors color, bool clearStrip){
 
     }
   }
-  /*
-  Implement get column and get row functions:
-  getColumn = (targetNum + (NUM_ROW - 1)) % NUM_ROW
-  getRow = (targetNum - 1) / NUM_ROW (int)
-  */
+ 
   //sets all of the LEDs in the specified target to the same color
   for(int i = target[targetNum - 1].startingLedIndex; i <= target[targetNum - 1].endingLedIndex; i++){
     strip[target[targetNum - 1].rowIndex] -> setPixelColor(i, color);
@@ -522,7 +519,7 @@ Scored after x seconds.
 void MET::twin(){
 resetMET();
   countMode = false;
-  countDownTime = RANDOM_TIME;
+  countDownTime = TWIN_TIME;
   if(VERBOSE){
     Serial.println("Gamemode: #5 - Twin Shot");
     Serial.print("Time Limit: ");
@@ -803,5 +800,5 @@ void MET::startCountdown(){
 
 int MET::generateRandom(int max){
   randomSeed(esp_random());
-  return ::random(0, max + 1);
+  return ::random(1, max + 1);
 }

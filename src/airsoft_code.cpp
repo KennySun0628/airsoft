@@ -59,7 +59,6 @@ void setup() {
   Serial.begin(115200);
   delay(500);
   Serial.println("Setup start");
-  delay(100);
 // Check the high water mark for stack usage
   //Serial.print("FreeRTOS Stack High Water Mark: ");
   //Serial.println(uxTaskGetStackHighWaterMark(NULL));
@@ -68,24 +67,20 @@ void setup() {
   pinMode(DATA, INPUT);
   pinMode(SWITCH, INPUT_PULLUP);
   Serial.println("Pins initialized");
-  delay(100);
 
   m = new MET();
   Serial.println("MET created");
 
-  /*  
   attachInterrupt(digitalPinToInterrupt(CLOCK), encoderISR, CHANGE);
   Serial.println("Interrupt Attached");
 
   Serial.print("Game Mode: ");
   Serial.println(gameMode); 
- */ 
 }
 
 
 
 void loop() {
-  /*
   if (stateChanged) {  // If encoder changed state
     Serial.print("Game Mode: ");
     Serial.println(gameMode);
@@ -104,9 +99,5 @@ void loop() {
   if (digitalRead(SWITCH) == HIGH) {
     buttonPressed = false;  // Reset when button is released
   }
-  */
-
-  delay(1000);
-  Serial.println("Loop running");
 }
   
