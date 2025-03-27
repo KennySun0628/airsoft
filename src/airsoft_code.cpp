@@ -46,6 +46,7 @@ volatile int gameMode = 1;   // Stores the current game mode (1-5)
 volatile bool stateChanged = false;
 int lastState;
 bool buttonPressed = false;
+bool gameRunning = false;
 MET* m;
 QueueHandle_t gameModeQueue;
 
@@ -62,7 +63,7 @@ void encoderISR();
 void setup() {
   Serial.begin(115200);
   
-  gameModeQueue = xQueueCreate(5, sizeof(int));
+  gameModeQueue = xQueueCreate(1, sizeof(int));
 
   xTaskCreatePinnedToCore(
     TaskGameMode,
@@ -106,6 +107,7 @@ void TaskGameMode(void* pvParameters){
       gameMode = receivedGameMode;
       sendLog("Game Mode Started from Web: " + String(gameMode));
       m -> run(gameMode);
+      gameRunning = false;
     }
 
     if(stateChanged){
@@ -114,9 +116,11 @@ void TaskGameMode(void* pvParameters){
     }
     
     if(digitalRead(SWITCH) == LOW && !buttonPressed){
+      gameRunning = true;
       sendLog("Starting Game Mode: " + String(gameMode));
       m-> run(gameMode);
       buttonPressed = true;
+      gameRunning = false;
     }
 
     if(digitalRead(SWITCH) == HIGH){
@@ -196,7 +200,13 @@ void webSocketEvent(byte num, WStype_t type, uint8_t *payload, size_t length){
           return;
       }
       const int selectedGamemode = doc_rx["game_mode"];
-      xQueueSend(gameModeQueue, &selectedGamemode, portMAX_DELAY);
+      if(!gameRunning){
+        gameRunning = true;
+        xQueueSend(gameModeQueue, &selectedGamemode, 0);
+      }
+      else{
+        sendLog("Game is in progress");
+      }
       break;
   }
   
