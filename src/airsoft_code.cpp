@@ -45,6 +45,7 @@ Game Modes:
 volatile int gameMode = 1;   // Stores the current game mode (1-5)
 volatile bool stateChanged = false;
 int lastState;
+bool clientConnected = false;
 bool buttonPressed = false;
 bool gameRunning = false;
 MET* m;
@@ -100,7 +101,13 @@ void TaskGameMode(void* pvParameters){
   m = new MET();
   sendLog("MET created");
 
+  while(!clientConnected){
+    sendLog("Waiting for Client...");
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
   int receivedGameMode = gameMode;
+
+  sendLog("Game Mode: " + String(gameMode));
 
   while(true){
     if(xQueueReceive(gameModeQueue, &receivedGameMode, 0) == pdTRUE){
@@ -191,6 +198,7 @@ void webSocketEvent(byte num, WStype_t type, uint8_t *payload, size_t length){
       sendLog("Client Disconnected");
       break;
     case WStype_CONNECTED:
+      clientConnected = true;
       sendLog("Client Connected");
       break;
     case WStype_TEXT:
