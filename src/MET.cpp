@@ -3,6 +3,7 @@
 //Kenny Sun
 
 #include "MET.h"
+#include "log.h"
 using namespace std;
 
 //Constructor
@@ -14,7 +15,7 @@ MET::MET(){
   int pin = -1;
 
   if(NUM_ROWS > OUTPUT_PIN_COUNT){
-    Serial.println("ERROR - NOT ENOUGH OUTPUT PINS");
+    sendLog("ERROR - NOT ENOUGH OUTPUT PINS");
     return;
   }
   //initialize each row of LEDs
@@ -26,63 +27,54 @@ MET::MET(){
       // Safe to access pinArray[i]
       pin = outputPins[i];
       if(VERBOSE){
-        Serial.print("Pin: ");
-        Serial.println(pin);
+        sendLog("Pin: " + (String)pin );
       }
     } 
     else {
-      Serial.println("Pin Array Out of Bounds Error");
+      sendLog("Pin Array Out of Bounds Error");
       return;
     }
 
     if(pin == -1){
-      Serial.println("Invalid Output Pin Number");
+      sendLog("Invalid Output Pin Number");
       return;
     }
     else{
       strip[i] = new Adafruit_NeoPixel( (targetsRemaining > targetsPerStrip) ? (targetsPerStrip * TARGET_NUM_LED) : (targetsRemaining * TARGET_NUM_LED), pin, NEO_GRB + NEO_KHZ800);
       if(VERBOSE){
-        Serial.println("Neopixel Strip Created");
+        sendLog("Neopixel Strip Created");
         
-        Serial.print("LED Pin: ");
-        Serial.println(pin);
-
-        Serial.print("Free Heap: ");
-        Serial.println(ESP.getFreeHeap());
+        sendLog("LED Pin: " + String(pin));
       }
 
       strip[i] -> setBrightness(LED_BRIGHTNESS);
       if(VERBOSE){
-        Serial.print("Neopixel Brightness Set: ");
-        Serial.println(LED_BRIGHTNESS);
+        sendLog("Neopixel Brightness Set: " + String(LED_BRIGHTNESS));
       }
       strip[i] -> begin();
       if(VERBOSE){
-        Serial.println("Neopixel Strip Began");
+        sendLog("Neopixel Strip Began");
       }
     }
 
     if(VERBOSE){
-      Serial.print("Row Index: ");
-      Serial.println(i);
+      sendLog("Row Index: " + String(i));
     }
+
     //initialize every target that belongs in this row
     for(int j = 0; j < ((targetsRemaining > targetsPerStrip) ? targetsPerStrip : targetsRemaining); j++){
       int targetNumber = (targetsPerStrip * i) + j;
       
       if (targetNumber >= NUM_TARGETS || targetNumber >= INPUT_PIN_COUNT) {
-        Serial.println("ERROR: Target number out of bounds!");
+        sendLog("ERROR: Target number out of bounds!");
         return; 
       }
 
       target[targetNumber].SENSOR_PIN = inputPins[targetNumber];
       if(VERBOSE){
-        Serial.print("Target Index: ");
-        Serial.println(j);
-        Serial.print("Target Number: ");
-        Serial.println(targetNumber + 1);
-        Serial.print("Sensor Pinout: ");
-        Serial.println(target[targetNumber].SENSOR_PIN);
+        sendLog("Target Index: " + String(j));
+        sendLog("Target Number: " + String(targetNumber + 1));
+        sendLog("Sensor Pinout: " + String(target[targetNumber].SENSOR_PIN));
       }
       //pinMode(target[targetNumber].SENSOR_PIN, INPUT);
       
@@ -111,7 +103,7 @@ MET::~MET(){
 //Main function to facilitate modes changes
 void MET::run(int gameMode){
   startCountdown(); 
-  Serial.println("Start!");
+  sendLog("Start!");
   
 	switch (gameMode){
 		case 1:  
@@ -160,8 +152,7 @@ bool clearStrip       - true:   Sets other target LEDs to OFF
 */
 void MET::setTargetColor(int targetNum, neoPixelColors color, bool clearStrip){
   if(VERBOSE){
-    Serial.print("Target: ");
-    Serial.print(targetNum);
+    Serial.print("Target: " + String(targetNum));
     printColor(color);
   }
   
@@ -192,7 +183,7 @@ neoPixelColors color  - Color to set the targets to (from the neoPixelColors enu
 */
 void MET::setAllTargetColor(neoPixelColors color){
   if(VERBOSE){
-    Serial.println("Set All Targets");
+    sendLog("Set All Targets");
   }
 
   for(int i = 0; i < NUM_ROWS; i++){
@@ -278,39 +269,39 @@ void MET::printColor(neoPixelColors color){
 
   switch(color){
     case RED:
-      Serial.println(" RED");
+      sendLog(" RED");
       break;
 
     case GREEN:
-      Serial.println(" GREEN");
+      sendLog(" GREEN");
       break;
 
     case BLUE: 
-      Serial.println(" BLUE");
+      sendLog(" BLUE");
       break;
     
     case YELLOW:
-      Serial.println(" YELLOW");
+      sendLog(" YELLOW");
       break;
     
     case CYAN:
-      Serial.println(" CYAN");
+      sendLog(" CYAN");
       break;
     
     case MAGENTA:
-      Serial.println(" MAGENTA");
+      sendLog(" MAGENTA");
       break;
 
     case WHITE:
-      Serial.println(" WHITE");
+      sendLog(" WHITE");
       break;
 
     case OFF:
-      Serial.println(" OFF");
+      sendLog(" OFF");
       break;
 
     default:
-      Serial.println(" Unknown Color Type");
+      sendLog(" Unknown Color Type");
       break;
   }
 }
@@ -338,7 +329,7 @@ void MET::quickDraw(){
   resetMET();
   countMode = true;
   if(VERBOSE){
-    Serial.println("Gamemode: #1 - Quick Draw");
+    sendLog("Gamemode: #1 - Quick Draw");
   }
  
   int bullseye = generateRandom(NUM_TARGETS);
@@ -355,15 +346,12 @@ void MET::quickDraw(){
   }
   setTargetColor(targetHit, RED, true);
   if(VERBOSE){
-    Serial.print("Target Hit: ");
-    Serial.println(targetHit); 
+    sendLog("Target Hit: " + String(targetHit)); 
   }
   
   displayTargets();
 
-  Serial.print("Final Time: ");
-  Serial.print((elapsedTime / MILLI_IN_SECONDS), 3);
-  Serial.println("s");
+  sendLog("Final Time: " + String((elapsedTime / MILLI_IN_SECONDS)) + "s");
   resetMET(); 
 }
 	
@@ -379,10 +367,8 @@ void MET::SD(){
   countMode = true;
 
   if(VERBOSE){
-    Serial.println("Gamemode: #2 - Search and Destroy");
-    Serial.print("Time Limit: ");
-    Serial.print(countDownTime / MILLI_IN_SECONDS);
-    Serial.println("sec");
+    sendLog("Gamemode: #2 - Search and Destroy");
+    sendLog("Time Limit: " + String(countDownTime / MILLI_IN_SECONDS) + "sec");
   }
   int scoreCount = 0;
 
@@ -400,9 +386,7 @@ void MET::SD(){
       scoreCount++;
   }
   turnOffTargets();
-  Serial.print("Final Time: ");
-  Serial.print((elapsedTime / MILLI_IN_SECONDS), 3);
-  Serial.println("s");
+  sendLog("Final Time: " + String((elapsedTime / MILLI_IN_SECONDS)) + "s");
   resetMET(); 
 }
 
@@ -414,7 +398,7 @@ Timed until all targets are hit.
 void MET::blackout(){
  resetMET();
  if(VERBOSE){
-  Serial.println("Gamemode: #3 - Blackout");
+  sendLog("Gamemode: #3 - Blackout");
  }
  countMode = true;
  setAllTargetColor(ACTIVE_TARGET_COLOR);
@@ -429,9 +413,7 @@ void MET::blackout(){
   }
  }
 
-  Serial.print("Final Time: ");
-  Serial.print((elapsedTime / MILLI_IN_SECONDS), 3);
-  Serial.println("s");
+  sendLog("Final Time: " + String((elapsedTime / MILLI_IN_SECONDS)) + "s");
   resetMET(); 
 }
 
@@ -446,10 +428,8 @@ void MET::random(){
   countMode = false;
   countDownTime = RANDOM_TIME;
   if(VERBOSE){
-    Serial.println("Gamemode: #4 - Random");
-    Serial.print("Time Limit: ");
-    Serial.print(countDownTime / MILLI_IN_SECONDS);
-    Serial.println("sec");
+    sendLog("Gamemode: #4 - Random");
+    sendLog("Time Limit: " + String(countDownTime / MILLI_IN_SECONDS) + "sec");
   }
   
   static unsigned long prevTime = 0;
@@ -466,10 +446,8 @@ void MET::random(){
     bool timeout = false;
 
     if(VERBOSE){
-      Serial.print("Bullseye: ");
-      Serial.println(bullseye);
-      Serial.print("Score: ");
-      Serial.println(scoreCount);
+      sendLog("Bullseye: " + String(bullseye));
+      sendLog("Score: " + String(scoreCount));
     }
 
     prevTime = millis();
@@ -494,8 +472,12 @@ void MET::random(){
         break;
     }
     if(VERBOSE){
-      Serial.print("Timed Out: ");
-      Serial.println(timeout ? "True" : "False");
+      if(timeout){
+        sendLog("Timed Out: True");
+      }
+      else{
+        sendLog("Timed Out: False");
+      }
     }
 
     if(!timeUp && !timeout){
@@ -505,8 +487,7 @@ void MET::random(){
     displayTargets(200);
   }
   turnOffTargets();
-  Serial.print("Score: ");
-  Serial.println(scoreCount);
+  sendLog("Score: " + String(scoreCount));
   resetMET(); 
 }
 
@@ -521,10 +502,8 @@ resetMET();
   countMode = false;
   countDownTime = TWIN_TIME;
   if(VERBOSE){
-    Serial.println("Gamemode: #5 - Twin Shot");
-    Serial.print("Time Limit: ");
-    Serial.print(countDownTime / MILLI_IN_SECONDS);
-    Serial.println("sec");
+    sendLog("Gamemode: #5 - Twin Shot");
+    sendLog("Time Limit: " + String(countDownTime / MILLI_IN_SECONDS) + "sec");
   }
   
   static unsigned long prevTime = 0;
@@ -550,12 +529,8 @@ resetMET();
     
 
     if(VERBOSE){
-      Serial.print("Bullseye 1: ");
-      Serial.println(bullseye1);
-      Serial.print("Bullseye 2: ");
-      Serial.println(bullseye2);
-      Serial.print("Score: ");
-      Serial.println(scoreCount);
+      sendLog("Bullseye 1: " + String(bullseye1));
+      sendLog("Bullseye 2: " + String(bullseye1));
     }
 
     prevTime = millis();
@@ -603,8 +578,12 @@ resetMET();
         break;
     }
     if(VERBOSE){
-      Serial.print("Timed Out: ");
-      Serial.println(timeout ? "True" : "False");
+      if(timeout){
+        sendLog("Timed Out: True");
+      }
+      else{
+        sendLog("Timed Out: False");
+      }
     }
 
     if(!timeUp && !timeout){
@@ -612,8 +591,7 @@ resetMET();
     }
   }
   turnOffTargets();
-  Serial.print("Score: ");
-  Serial.println(scoreCount);
+  sendLog("Score: " + String(scoreCount));
   resetMET(); 
 }
 
@@ -748,9 +726,7 @@ int MET::updateTimerThread(struct pt* pt1){
         }
       }
     }
-    Serial.print("Time: ");
-    Serial.print(countMode ? (elapsedTime / MILLI_IN_SECONDS) : (timeRemain / MILLI_IN_SECONDS), 3);
-    Serial.println("s");
+    sendLog("Time: " + String(countMode ? (elapsedTime / MILLI_IN_SECONDS) : (timeRemain / MILLI_IN_SECONDS)) + "s");
     
     PT_YIELD(pt1);
   }
@@ -803,8 +779,7 @@ void MET::startCountdown(){
   resetMET();
   countDownTime = START_COUNTDOWN;
   if(VERBOSE){
-    Serial.println("COUNTDOWN");
-    Serial.println(countDownTime);
+    sendLog("COUNTDOWN" + String(countDownTime));
   }
   countMode = false;
   while(!timeUp){
