@@ -2,11 +2,34 @@
 #include <Arduino.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include <WebSocketsServer.h>
+#include <ArduinoJson.h>
+
+#include "log.h"
+#include "index.h"
 #include "MET.h"
 
 #define CLOCK 18 
 #define DATA 19
 #define SWITCH 21
+
+//SSID and Password
+const char* ssid = "";
+const char* password = "";
+
+WebServer server (80);
+WebSocketsServer webSocket = WebSocketsServer(81);
+
+String webpage = HTML_CONTENT_GAMEMODE;
+
+int interval = 1000;
+unsigned long previousMillis = 0;
+
+StaticJsonDocument<200> doc_tx;
+StaticJsonDocument<200> doc_rx;
+
 /*
 ****************************************************************************************
 Game Modes:
@@ -24,12 +47,87 @@ volatile bool stateChanged = false;
 int lastState;
 bool buttonPressed = false;
 MET* m;
+QueueHandle_t gameModeQueue;
 
 int lastClockState = LOW;  // Track the last state of the CLOCK pin
 unsigned long lastDebounceTime = 0;  // Last time the state changed
 unsigned long debounceDelay = 100;  // Debounce delay (in milliseconds)
 
+void TaskGameMode(void* pvParameters);
+void TaskWebServer(void* pvParameters);
+void webSocketEvent(byte num, WStype_t type, uint8_t* payload, size_t length);
+void sendLog(String message);
+void encoderISR();
 
+void setup() {
+  Serial.begin(115200);
+  
+  gameModeQueue = xQueueCreate(5, sizeof(int));
+
+  xTaskCreatePinnedToCore(
+    TaskGameMode,
+    "GameModeTask",
+    4096,
+    NULL,
+    1,
+    NULL,
+    0
+  );
+
+  xTaskCreatePinnedToCore(
+    TaskWebServer,
+    "WebServerTask",
+    8192,
+    NULL,
+    1,
+    NULL,
+    1 
+  );
+
+}
+
+//Game Mode Thread
+void TaskGameMode(void* pvParameters){
+  pinMode(CLOCK, INPUT);
+  pinMode(DATA, INPUT);
+  pinMode(SWITCH, INPUT_PULLUP);
+  sendLog("Pins initialized");
+
+  attachInterrupt(digitalPinToInterrupt(CLOCK), encoderISR, CHANGE);
+  sendLog("Interrupt Attached");
+
+  m = new MET();
+  sendLog("MET created");
+
+  int receivedGameMode = gameMode;
+
+  while(true){
+    if(xQueueReceive(gameModeQueue, &receivedGameMode, 0) == pdTRUE){
+      gameMode = receivedGameMode;
+      sendLog("Game Mode Started from Web: " + String(gameMode));
+      m -> run(gameMode);
+    }
+
+    if(stateChanged){
+      sendLog("Game Mode: " + String(gameMode));
+      stateChanged = false;
+    }
+    
+    if(digitalRead(SWITCH) == LOW && !buttonPressed){
+      sendLog("Starting Game Mode: " + String(gameMode));
+      m-> run(gameMode);
+      buttonPressed = true;
+    }
+
+    if(digitalRead(SWITCH) == HIGH){
+      buttonPressed = false;
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
+}
+
+//ISR for rotary encoder detection including bounce delay
 void encoderISR() {
   int currentClockState = digitalRead(CLOCK);  // Read the current state of the CLOCK pin
   
@@ -53,51 +151,57 @@ void encoderISR() {
   lastClockState = currentClockState;  // Update the last clock state for the next comparison
 }
 
+void TaskWebServer(void* pvParameters){
+WiFi.begin(ssid, password);
+  Serial.print("Establishing connection to WiFi with SSID: ");
+  Serial.println(ssid);
+ 
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    sendLog(".");
+  }
 
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(115200);
-  delay(500);
-  Serial.println("Setup start");
-// Check the high water mark for stack usage
-  //Serial.print("FreeRTOS Stack High Water Mark: ");
-  //Serial.println(uxTaskGetStackHighWaterMark(NULL));
+  Serial.print("Connected to network with IP address: ");
+  Serial.println(WiFi.localIP());
+   server.on("/", [] () {
+      server.send(200, "text\html", webpage);
+  });
 
-  pinMode(CLOCK, INPUT);
-  pinMode(DATA, INPUT);
-  pinMode(SWITCH, INPUT_PULLUP);
-  Serial.println("Pins initialized");
+  server.begin();
+  webSocket.begin();
 
-  m = new MET();
-  Serial.println("MET created");
+  webSocket.onEvent(webSocketEvent);
+  Serial.println("Web Server Started");
 
-  attachInterrupt(digitalPinToInterrupt(CLOCK), encoderISR, CHANGE);
-  Serial.println("Interrupt Attached");
+  while(true){
+    server.handleClient();
+    webSocket.loop();
 
-  Serial.print("Game Mode: ");
-  Serial.println(gameMode); 
+    vTaskDelay(pdMS_TO_TICKS(50));
+  }
 }
 
-
+void webSocketEvent(byte num, WStype_t type, uint8_t *payload, size_t length){
+  switch(type){
+    case WStype_DISCONNECTED:
+      sendLog("Client Disconnected");
+      break;
+    case WStype_CONNECTED:
+      sendLog("Client Connected");
+      break;
+    case WStype_TEXT:
+      DeserializationError error = deserializeJson(doc_rx, payload);
+      if(error){
+          sendLog("Deserialize Json() failed");
+          return;
+      }
+      const int selectedGamemode = doc_rx["game_mode"];
+      xQueueSend(gameModeQueue, &selectedGamemode, portMAX_DELAY);
+      break;
+  }
+  
+}
 
 void loop() {
-  if (stateChanged) {  // If encoder changed state
-    Serial.print("Game Mode: ");
-    Serial.println(gameMode);
-    stateChanged = false;  // Reset flag after printing
-  }
-
-  if (digitalRead(SWITCH) == LOW && !buttonPressed) {
-    Serial.print("Starting Game Mode: ");
-    Serial.println(gameMode);
-    m -> run(gameMode);  // Call function to start selected mode
-    Serial.print("Game Mode: ");
-    Serial.println(gameMode);
-    buttonPressed = true;  // Prevents multiple triggers while held
-  }
-
-  if (digitalRead(SWITCH) == HIGH) {
-    buttonPressed = false;  // Reset when button is released
-  }
 }
   
