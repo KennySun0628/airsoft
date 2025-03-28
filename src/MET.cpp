@@ -4,6 +4,7 @@
 
 #include "MET.h"
 #include "log.h"
+#include "esp_task_wdt.h"
 using namespace std;
 
 //Constructor
@@ -728,6 +729,7 @@ int MET::updateTimerThread(struct pt* pt1){
     }
     sendLog("Time: " + String(countMode ? (elapsedTime / MILLI_IN_SECONDS) : (timeRemain / MILLI_IN_SECONDS)) + "s");
     
+    esp_task_wdt_reset();
     PT_YIELD(pt1);
   }
   PT_END(pt1);

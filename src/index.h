@@ -50,15 +50,15 @@ html, body {
 }
 
 #serialContainer {
-  background-color: azure;  /* Dark background like a terminal */
-  color: black;         /* Bright text for visibility */
+  background-color: azure;  
+  color: black;         
   font-family: "Courier New", monospace;
   padding: 10px;
   border-radius: 10px;
-  height: 300px;            /* Fixed height */
+  height: 500px;            /* Fixed height */
   width: 95%;
   overflow-y: auto;         /* Enable vertical scrollbar */
-  white-space: pre-wrap;    /* Preserve line breaks */
+  white-space: pre-line;    /* Preserve line breaks */
   border: 2px solid limegreen;
   scrollbar-width: thin;    /* Makes the scrollbar thinner (for Firefox) */
   scrollbar-color: gray; /* Custom scrollbar color */
@@ -148,6 +148,15 @@ function openPage(pageName, element, color) {
   element.style.backgroundColor = color;
   element.style.color = 'black'; // Keep text black when selected
   element.classList.add('active'); // Add active class
+
+  //Scroll to bottom of Serial Monitor
+  if(pageName == "SerialMonitor"){
+    setTimeout(()=> {
+      const serialMonitor = document.getElementById("serialContainer");
+      serialMonitor.scrollTop = serialMonitor.scrollHeight;  
+    }, 
+    100);
+  }
 }
 
 var socket;

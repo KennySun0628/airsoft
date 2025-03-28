@@ -15,9 +15,20 @@
 #define DATA 19
 #define SWITCH 21
 
-//SSID and Password
-const char* ssid = "";
-const char* password = "";
+#define AP false
+#define ROUTER true
+
+#define AP_SSID "ESP32"
+#define AP_PASSWORD "Airsoft123"
+
+#define ROUTER_SSID ""
+#define ROUTER_PASSWORD ""
+
+const bool serverMode = AP;
+
+char* ssid = nullptr;
+char* password = nullptr;
+
 
 WebServer server (80);
 WebSocketsServer webSocket = WebSocketsServer(81);
@@ -73,7 +84,7 @@ void setup() {
     NULL,
     1,
     NULL,
-    0
+    1 
   );
 
   xTaskCreatePinnedToCore(
@@ -83,7 +94,7 @@ void setup() {
     NULL,
     1,
     NULL,
-    1 
+    0 
   );
 
 }
@@ -163,18 +174,39 @@ void encoderISR() {
 }
 
 void TaskWebServer(void* pvParameters){
-WiFi.begin(ssid, password);
-  Serial.print("Establishing connection to WiFi with SSID: ");
-  Serial.println(ssid);
- 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    sendLog(".");
-  }
+  if(serverMode == AP){
+    ssid = AP_SSID;
+    password = AP_PASSWORD;
+    IPAddress local_IP(192,168,1,22);
+    IPAddress gateway(192,168,1,5);
+    IPAddress subnet(255,255,255,0);
 
-  Serial.print("Connected to network with IP address: ");
-  Serial.println(WiFi.localIP());
-   server.on("/", [] () {
+    Serial.print("Setting up Access Point");
+    Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? " Ready" : " Failed!");
+    
+    Serial.print("Setting AP...");
+    Serial.println(WiFi.softAP(ssid, password, 6) ? " Ready" : " Failed!");
+
+    Serial.print("IP address = ");
+    Serial.println(WiFi.softAPIP());
+  }
+  else if(serverMode == ROUTER){
+    ssid = ROUTER_SSID;
+    password = ROUTER_PASSWORD;
+    WiFi.begin(ssid, password);
+    Serial.print("Establishing connection to WiFi with SSID: ");
+    Serial.println(ssid);
+
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(1000);
+      sendLog(".");
+    }
+
+    Serial.print("Connected to network with IP address: ");
+    Serial.println(WiFi.localIP());
+  }
+ 
+  server.on("/", [] () {
       server.send(200, "text\html", webpage);
   });
 
