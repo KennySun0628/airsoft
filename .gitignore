@@ -5,3 +5,5 @@
 .vscode/ipch
 
 .fake
+src/test.etl
+src/test.cab

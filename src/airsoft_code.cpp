@@ -100,6 +100,7 @@ void setup() {
 }
 
 //Game Mode Thread
+//Runs controls logic and peripherals for playing games
 void TaskGameMode(void* pvParameters){
   pinMode(CLOCK, INPUT);
   pinMode(DATA, INPUT);
@@ -173,6 +174,9 @@ void encoderISR() {
   lastClockState = currentClockState;  // Update the last clock state for the next comparison
 }
 
+//Web Server Thread
+//Starts web server on startup, handles and maintains client connections while game is run
+//Also sends game mode selection data to game mode thread
 void TaskWebServer(void* pvParameters){
   if(serverMode == AP){
     ssid = AP_SSID;
