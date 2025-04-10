@@ -24,7 +24,10 @@
 #define ROUTER_SSID ""
 #define ROUTER_PASSWORD ""
 
+const bool requireClient = true;
+
 const bool serverMode = AP;
+
 
 char* ssid = nullptr;
 char* password = nullptr;
@@ -59,7 +62,6 @@ int lastState;
 bool clientConnected = false;
 bool buttonPressed = false;
 bool gameRunning = false;
-MET* m;
 QueueHandle_t gameModeQueue;
 
 int lastClockState = LOW;  // Track the last state of the CLOCK pin
@@ -110,12 +112,14 @@ void TaskGameMode(void* pvParameters){
   attachInterrupt(digitalPinToInterrupt(CLOCK), encoderISR, CHANGE);
   sendLog("Interrupt Attached");
 
-  m = new MET();
+  MET m;
   sendLog("MET created");
 
-  while(!clientConnected){
-    sendLog("Waiting for Client...");
-    vTaskDelay(pdMS_TO_TICKS(1000));
+  if(requireClient){
+    while(!clientConnected){
+      sendLog("Waiting for Client...");
+      vTaskDelay(pdMS_TO_TICKS(1000));
+    }
   }
   int receivedGameMode = gameMode;
 
@@ -125,7 +129,7 @@ void TaskGameMode(void* pvParameters){
     if(xQueueReceive(gameModeQueue, &receivedGameMode, 0) == pdTRUE){
       gameMode = receivedGameMode;
       sendLog("Game Mode Started from Web: " + String(gameMode));
-      m -> run(gameMode);
+      m.run(gameMode);
       gameRunning = false;
     }
 
@@ -137,7 +141,7 @@ void TaskGameMode(void* pvParameters){
     if(digitalRead(SWITCH) == LOW && !buttonPressed){
       gameRunning = true;
       sendLog("Starting Game Mode: " + String(gameMode));
-      m-> run(gameMode);
+      m.run(gameMode);
       buttonPressed = true;
       gameRunning = false;
     }

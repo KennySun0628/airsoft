@@ -2,6 +2,8 @@
 //header file for MET and target class
 //Kenny Sun
 #pragma once
+#ifndef MET_H
+#define MET_h
 
 #include <Adafruit_NeoPixel.h>
 #include <Chrono.h>
@@ -126,3 +128,5 @@ private:
   void startCountdown();
   int generateRandom(int);
 };
+
+#endif
