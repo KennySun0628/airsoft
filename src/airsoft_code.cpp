@@ -18,11 +18,11 @@
 #define AP false
 #define ROUTER true
 
-#define AP_SSID "ESP32"
-#define AP_PASSWORD "Airsoft123"
+const char* apSSID = "ESP32";
+const char* apPassword = "Airsoft123";
 
-#define ROUTER_SSID ""
-#define ROUTER_PASSWORD ""
+const char* routerSSID = "";
+const char* routerPassword = "";
 
 const bool requireClient = true;
 
@@ -41,8 +41,9 @@ String webpage = HTML_CONTENT_GAMEMODE;
 int interval = 1000;
 unsigned long previousMillis = 0;
 
-StaticJsonDocument<200> doc_tx;
-StaticJsonDocument<200> doc_rx;
+JsonDocument doc_tx = StaticJsonDocument<200>();
+JsonDocument doc_rx = StaticJsonDocument<200>();
+
 
 /*
 ****************************************************************************************
@@ -183,8 +184,7 @@ void encoderISR() {
 //Also sends game mode selection data to game mode thread
 void TaskWebServer(void* pvParameters){
   if(serverMode == AP){
-    ssid = AP_SSID;
-    password = AP_PASSWORD;
+   
     IPAddress local_IP(192,168,1,22);
     IPAddress gateway(192,168,1,5);
     IPAddress subnet(255,255,255,0);
@@ -193,15 +193,13 @@ void TaskWebServer(void* pvParameters){
     Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? " Ready" : " Failed!");
     
     Serial.print("Setting AP...");
-    Serial.println(WiFi.softAP(ssid, password, 6) ? " Ready" : " Failed!");
+    Serial.println(WiFi.softAP(apSSID, apPassword, 6) ? " Ready" : " Failed!");
 
     Serial.print("IP address = ");
     Serial.println(WiFi.softAPIP());
   }
   else if(serverMode == ROUTER){
-    ssid = ROUTER_SSID;
-    password = ROUTER_PASSWORD;
-    WiFi.begin(ssid, password);
+    WiFi.begin(routerSSID, routerPassword);
     Serial.print("Establishing connection to WiFi with SSID: ");
     Serial.println(ssid);
 
@@ -215,7 +213,7 @@ void TaskWebServer(void* pvParameters){
   }
  
   server.on("/", [] () {
-      server.send(200, "text\html", webpage);
+      server.send(200, "text/html", webpage);
   });
 
   server.begin();
