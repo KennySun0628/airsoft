@@ -47,6 +47,12 @@
 
 #define OUTPUT_PIN_COUNT 6 
 #define INPUT_PIN_COUNT 16
+
+#define SENSOR_INITIAL_VALUE 4000
+#define SENSOR_AVERAGE_VALUE 3500
+#define SENSOR_POLL_AMOUNT 5
+#define SENSOR_POLL_DELAY 5
+
  
 
 enum neoPixelColors {
@@ -76,11 +82,12 @@ struct target_s {
   //pin number of the sensor
   int SENSOR_PIN;
 
-  //Status of the piezosensor
-  int currentStatus;
+  //Status of the sensor
+  bool hit = false;
 
   //Index of which row target is in
   int rowIndex;
+
 };
 
 class MET {

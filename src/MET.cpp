@@ -79,7 +79,7 @@ MET::MET(){
       }
       //pinMode(target[targetNumber].SENSOR_PIN, INPUT);
       
-      target[targetNumber].currentStatus = LOW;
+      target[targetNumber].hit = false;
       target[targetNumber].rowIndex = i;
       target[targetNumber].startingLedIndex = j * TARGET_NUM_LED;
       target[targetNumber].endingLedIndex =  target[targetNumber].startingLedIndex + (TARGET_NUM_LED - 1);
@@ -610,24 +610,29 @@ Return type:
 int    - the number of the target that was hit
 
 Parameters: 
-bool reset - true:   resets the "currentStatus" for the sensor to allow reuse
-             false:  sets "currentStatus" sensor so further readings do not occur 
+bool reset - true:   allows multiple readings from the same sensor
+             false:  doesnt allow multiple readings from the same sensor 
 */
 int MET::readSensors(bool reset){
-  int targetNum = -1;
+  for(int targetNum = 1; targetNum <= NUM_TARGETS; targetNum++){
+    if(reset || !target[targetNum - 1].hit){
+      int sensorValue = analogRead(target[targetNum - 1].SENSOR_PIN);
+      sendLog("Target: " + String(targetNum) + "\nInit Value: " + String(sensorValue));
 
-  for(int i = 0; i < NUM_TARGETS; i++){
-   int tempStatus = digitalRead(target[i].SENSOR_PIN);
-    if(target[i].currentStatus == LOW && tempStatus == HIGH){
-      if(!reset){
-        target[i].currentStatus = HIGH;
+      if(sensorValue > SENSOR_INITIAL_VALUE){
+        for(int i = 0; i < SENSOR_POLL_AMOUNT; i++){
+          sensorValue += analogRead(target[targetNum -1].SENSOR_PIN);
+          delayTimer(SENSOR_POLL_DELAY);
+        }
+        sensorValue /= SENSOR_POLL_AMOUNT;
+        sendLog("Average Value: " + String (sensorValue));
+        if(sensorValue > SENSOR_AVERAGE_VALUE){
+            target[targetNum - 1].hit = true;
+            return targetNum;
+        }
       }
-      targetNum = i + 1;
-      delayTimer(DEBOUNCE);
-      return targetNum;
     }
   }
-
   return -1;
 }
 
@@ -644,7 +649,7 @@ NONE
 */
 bool MET::allTargetsHit(){
   for(int i = 0; i < NUM_TARGETS; i++){
-    if(target[i].currentStatus != HIGH){
+    if(!target[i].hit){
       return false;
     }
   }
@@ -668,7 +673,7 @@ NONE
 void MET::resetMET(){
   turnOffTargets();
   for(int i = 0; i < NUM_TARGETS; i++){
-    target[i].currentStatus = LOW;
+    target[i].hit = false;
   }
   for(int i = 0; i < NUM_ROWS; i++)
   strip[i] -> clear();
