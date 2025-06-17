@@ -7,3 +7,4 @@
 .fake
 src/test.etl
 src/test.cab
+src/key.h

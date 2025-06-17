@@ -10,6 +10,7 @@
 #include "log.h"
 #include "index.h"
 #include "MET.h"
+#include "key.h"
 
 #define CLOCK 18 
 #define DATA 19
@@ -21,8 +22,8 @@
 const char* apSSID = "ESP32";
 const char* apPassword = "Airsoft123";
 
-const char* routerSSID = "Nest";
-const char* routerPassword = "Castle5033803932";
+const char* routerSSID = K_SSID;
+const char* routerPassword = K_KEY;
 
 const bool requireClient = false;
 

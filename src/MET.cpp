@@ -502,7 +502,11 @@ Both targets must be hit for next pair to light up.
 Scored after x seconds.
 */
 void MET::twin(){
-resetMET();
+  if(NUM_TARGETS < 2){
+    sendLog("Not Enough Targets!");
+    return;
+  }
+  resetMET();
   countMode = false;
   countDownTime = TWIN_TIME;
   if(VERBOSE){
