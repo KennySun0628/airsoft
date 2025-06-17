@@ -26,7 +26,7 @@ const char* routerPassword = "";
 
 const bool requireClient = true;
 
-const bool serverMode = AP;
+const bool serverMode = ROUTER;
 
 
 char* ssid = nullptr;
@@ -53,6 +53,7 @@ Game Modes:
 3. Blackout
 4. Random
 5. Twin Shot
+6. Calibrate Targets
 ****************************************************************************************
 */
 
@@ -167,10 +168,10 @@ void encoderISR() {
       
       if (currentDataState != currentClockState) {
         gameMode++;  // Clockwise rotation
-        if (gameMode > 5) gameMode = 1;
+        if (gameMode > 6) gameMode = 1;
       } else {
         gameMode--;  // Counter-clockwise rotation
-        if (gameMode < 1) gameMode = 5;
+        if (gameMode < 1) gameMode = 6;
       }
       stateChanged = true;  // Mark that the gameMode has changed
       lastDebounceTime = millis();  // Update debounce timer

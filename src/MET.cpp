@@ -122,6 +122,9 @@ void MET::run(int gameMode){
 		case 5:
 			twin();
 			break;
+    case 6:
+      calibrateTargets();
+      break;
 	}
 }
 /*
@@ -596,11 +599,52 @@ resetMET();
   resetMET(); 
 }
 
+
 /*
 ****************************************************************************************
 Helper functions to facilitate reading input from sensors and checking if all sensors are hit
 ****************************************************************************************
 */
+
+/*
+void calibrateTargets()
+Function to check calibration for each target
+
+Parameters: 
+NONE
+*/
+void MET::calibrateTargets(){
+  for(int i = 0; i < NUM_TARGETS; i++){
+    bool hit = false;
+    
+    turnOffTargets();
+    setTargetColor(i + 1, GREEN, true);
+    displayTargets();
+
+    sendLog("Target: " + String((i + 1)));
+
+    while(!hit){
+      int sensorValue = analogRead(target[i].SENSOR_PIN);
+      sendLog("Initial: " + String(sensorValue));
+
+      if(sensorValue > SENSOR_INITIAL_VALUE){
+        for(int j = 0; j < (SENSOR_POLL_AMOUNT - 1); j++){
+          sensorValue += analogRead(target[i].SENSOR_PIN);
+        }
+        sensorValue /= SENSOR_POLL_AMOUNT;
+
+        sendLog("Average: " + String(sensorValue));
+
+        if(sensorValue > SENSOR_AVERAGE_VALUE){
+          sendLog("HIT!");
+          hit = true;
+          setTargetColor(i + 1, RED, false);
+          delay(100);
+        }
+      }
+    }
+  }
+}
 
 /*
 int readSensors(bool reset)
@@ -617,15 +661,17 @@ int MET::readSensors(bool reset){
   for(int targetNum = 1; targetNum <= NUM_TARGETS; targetNum++){
     if(reset || !target[targetNum - 1].hit){
       int sensorValue = analogRead(target[targetNum - 1].SENSOR_PIN);
-      sendLog("Target: " + String(targetNum) + "\nInit Value: " + String(sensorValue));
+      if(VERBOSE)
+        sendLog("Target: " + String(targetNum) + "\nInit Value: " + String(sensorValue));
 
       if(sensorValue > SENSOR_INITIAL_VALUE){
-        for(int i = 0; i < SENSOR_POLL_AMOUNT; i++){
+        for(int i = 0; i < (SENSOR_POLL_AMOUNT - 1); i++){
           sensorValue += analogRead(target[targetNum -1].SENSOR_PIN);
           delayTimer(SENSOR_POLL_DELAY);
         }
         sensorValue /= SENSOR_POLL_AMOUNT;
-        sendLog("Average Value: " + String (sensorValue));
+        if(VERBOSE)
+          sendLog("Average Value: " + String (sensorValue));
         if(sensorValue > SENSOR_AVERAGE_VALUE){
             target[targetNum - 1].hit = true;
             return targetNum;
