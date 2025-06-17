@@ -223,7 +223,7 @@ unsigned long time    - How long to display the targets for (in Milliseconds)
 */
 void MET::displayTargets(unsigned long time){
   displayTargets();
-  delayTimer(time);
+  delayTimer(time - 10);
   turnOffTargets();
 }
  
@@ -614,22 +614,32 @@ Parameters:
 NONE
 */
 void MET::calibrateTargets(){
+  sendLog("Current Settings: \nInitial Threshold: " + String(SENSOR_INITIAL_VALUE));
+  sendLog("Number of Polls: " + String(SENSOR_POLL_AMOUNT));
+  sendLog("Average Threshold: " + String(SENSOR_AVERAGE_VALUE));
+  sendLog("Poll Delay (ms): " + String(SENSOR_POLL_DELAY));
+  //sendLog("Debounce: " + String(DEBOUNCE));
   for(int i = 0; i < NUM_TARGETS; i++){
     bool hit = false;
     
     turnOffTargets();
-    setTargetColor(i + 1, GREEN, true);
-    displayTargets();
+    setTargetColor(i + 1, GREEN, false);
+    strip[target[i].rowIndex] -> show();
 
+    sendLog("\n\n==============================================================================");
     sendLog("Target: " + String((i + 1)));
 
     while(!hit){
       int sensorValue = analogRead(target[i].SENSOR_PIN);
-      sendLog("Initial: " + String(sensorValue));
+      if(sensorValue != 0)
+        sendLog("Initial: " + String(sensorValue));
 
       if(sensorValue > SENSOR_INITIAL_VALUE){
         for(int j = 0; j < (SENSOR_POLL_AMOUNT - 1); j++){
-          sensorValue += analogRead(target[i].SENSOR_PIN);
+           int newValue = analogRead(target[i].SENSOR_PIN);
+           sendLog("New Value: " + String(newValue));
+           sensorValue += newValue;
+           delay(SENSOR_POLL_DELAY);
         }
         sensorValue /= SENSOR_POLL_AMOUNT;
 
@@ -639,10 +649,13 @@ void MET::calibrateTargets(){
           sendLog("HIT!");
           hit = true;
           setTargetColor(i + 1, RED, false);
+          strip[target[i].rowIndex] -> show();
           delay(100);
         }
       }
+      //delay(DEBOUNCE);
     }
+    turnOffTargets();
   }
 }
 
