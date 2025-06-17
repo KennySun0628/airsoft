@@ -3,6 +3,7 @@
 //Kenny Sun
 
 #include "MET.h"
+#include "config.h"
 #include "log.h"
 #include "esp_task_wdt.h"
 using namespace std;
@@ -103,8 +104,10 @@ MET::~MET(){
 
 //Main function to facilitate modes changes
 void MET::run(int gameMode){
-  startCountdown(); 
-  sendLog("Start!");
+  if(gameMode != 6){
+    startCountdown(); 
+    sendLog("Start!");
+  }
   
 	switch (gameMode){
 		case 1:  
@@ -618,7 +621,8 @@ Parameters:
 NONE
 */
 void MET::calibrateTargets(){
-  sendLog("Current Settings: \nInitial Threshold: " + String(SENSOR_INITIAL_VALUE));
+  sendLog("=====Current Settings=====");
+  sendLog("Initial Threshold: " + String(SENSOR_INITIAL_VALUE));
   sendLog("Number of Polls: " + String(SENSOR_POLL_AMOUNT));
   sendLog("Average Threshold: " + String(SENSOR_AVERAGE_VALUE));
   sendLog("Poll Delay (ms): " + String(SENSOR_POLL_DELAY));

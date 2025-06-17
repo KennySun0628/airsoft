@@ -113,6 +113,9 @@ html, body {
     
     <input type="radio" id="mode5" name="game_mode" value="5">
     <label for="mode5">#5 Twin Shot</label><br>
+
+    <input type="radio" id="mode6" name="game_mode" value="6">
+    <label for="mode6">Calibrate Targets</label><br>
     <br>
     <button onclick="submitGamemode(event)"> Start Game </button>
   </form>

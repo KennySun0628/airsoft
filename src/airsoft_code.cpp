@@ -19,6 +19,8 @@
 #define AP false
 #define ROUTER true
 
+//DRIVER SETTINGS
+//=======================================================================
 const char* apSSID = "ESP32";
 const char* apPassword = "Airsoft123";
 
@@ -29,10 +31,7 @@ const bool requireClient = false;
 
 const bool serverMode = ROUTER;
 
-
-char* ssid = nullptr;
-char* password = nullptr;
-
+//=======================================================================
 
 WebServer server (80);
 WebSocketsServer webSocket = WebSocketsServer(81);
@@ -203,7 +202,7 @@ void TaskWebServer(void* pvParameters){
   else if(serverMode == ROUTER){
     WiFi.begin(routerSSID, routerPassword);
     Serial.print("Establishing connection to WiFi with SSID: ");
-    Serial.println(ssid);
+    Serial.println(routerSSID);
 
     while (WiFi.status() != WL_CONNECTED) {
       delay(1000);

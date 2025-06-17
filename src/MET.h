@@ -9,51 +9,7 @@
 #include <Chrono.h>
 #include <pt.h>
 
-#define VERBOSE false 
-
-//Count down time before game
-#define START_COUNTDOWN 3000.0
-
-//Debounce time between sensor reads
-#define DEBOUNCE 50
-
-#define MILLI_IN_SECONDS 1000.0
-
-//Number of LEDs per Target
-#define TARGET_NUM_LED 4
-
-//Number of Targets in the grid
-#define NUM_TARGETS 1 
-
-//Number of Rows of LEDs
-#define NUM_ROWS 1 
-
-//LED brightness
-#define LED_BRIGHTNESS 150
-
-//Timer for the Game Modes (in milliseconds)
-#define RANDOM_TIME 8000.0
-#define TWIN_TIME 8000.0
-
-//Score count for Search and Destroy
-#define SD_SCORE 5
-
-//Time between automatic target change for Random and Twin gamemodes
-#define TIMEOUT 1.5f
-
-//Calibration time used for synchronizing timeout time calculations (to account for internal function calls)
-#define RANDOM_CALIBRATION 0.109f
-#define TWIN_CALIBRATION 0.2f
-
-#define OUTPUT_PIN_COUNT 6 
-#define INPUT_PIN_COUNT 16
-
-#define SENSOR_INITIAL_VALUE 4000
-#define SENSOR_AVERAGE_VALUE 1800
-#define SENSOR_POLL_AMOUNT 5
-#define SENSOR_POLL_DELAY 5
-
- 
+#include "config.h"
 
 enum neoPixelColors {
   RED     = 0xFF0000,
@@ -68,9 +24,6 @@ enum neoPixelColors {
   WHITE   = 0xFFFFFF,
   OFF     = 0x000000
 };
-
-#define ACTIVE_TARGET_COLOR PURPLE 
-
 
 struct target_s {
   //The Index of the first led in the target
@@ -105,6 +58,9 @@ private:
   unsigned long countDownTime = 0.0;
   bool countMode; //True = count up; False = count down
   bool timerResetFlag = true;
+
+  #define OUTPUT_PIN_COUNT 6 
+  #define INPUT_PIN_COUNT 16
   //const int inputPins[INPUT_PIN_COUNT] = {2, 4, 12, 13, 14, 15, 16, 17, 25, 26, 32, 33, 34, 35, 36, 39};
   const int inputPins[INPUT_PIN_COUNT] = {36, 39, 34, 35, 32, 33};
   const int outputPins[OUTPUT_PIN_COUNT] = {5, 22, 23, 25, 26, 27};
