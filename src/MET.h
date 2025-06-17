@@ -23,10 +23,10 @@
 #define TARGET_NUM_LED 4
 
 //Number of Targets in the grid
-#define NUM_TARGETS 3 
+#define NUM_TARGETS 1 
 
 //Number of Rows of LEDs
-#define NUM_ROWS 2 
+#define NUM_ROWS 1 
 
 //LED brightness
 #define LED_BRIGHTNESS 150
@@ -49,7 +49,7 @@
 #define INPUT_PIN_COUNT 16
 
 #define SENSOR_INITIAL_VALUE 4000
-#define SENSOR_AVERAGE_VALUE 3500
+#define SENSOR_AVERAGE_VALUE 800
 #define SENSOR_POLL_AMOUNT 5
 #define SENSOR_POLL_DELAY 5
 
@@ -105,7 +105,8 @@ private:
   unsigned long countDownTime = 0.0;
   bool countMode; //True = count up; False = count down
   bool timerResetFlag = true;
-  const int inputPins[INPUT_PIN_COUNT] = {2, 4, 12, 13, 14, 15, 16, 17, 25, 26, 32, 33, 34, 35, 36, 39};
+  //const int inputPins[INPUT_PIN_COUNT] = {2, 4, 12, 13, 14, 15, 16, 17, 25, 26, 32, 33, 34, 35, 36, 39};
+  const int inputPins[INPUT_PIN_COUNT] = {36, 39, 34, 35, 32, 33};
   const int outputPins[OUTPUT_PIN_COUNT] = {5, 22, 23, 25, 26, 27};
 
   
@@ -116,6 +117,8 @@ private:
   void blackout();
   void random();
   void twin();
+
+  void calibrateTargets();
 
   void setTargetColor(int, neoPixelColors, bool);
   void setAllTargetColor(neoPixelColors);
