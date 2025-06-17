@@ -2,6 +2,7 @@
 #ifndef CONFIG_H 
 #define CONFIG_H 
 
+//Verbose Function Output
 #define VERBOSE false 
 
 //Count down time before game

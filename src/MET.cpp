@@ -634,7 +634,7 @@ void MET::calibrateTargets(){
     setTargetColor(i + 1, GREEN, false);
     strip[target[i].rowIndex] -> show();
 
-    sendLog("\n\n==============================================================================");
+    sendLog("\n\n==========================");
     sendLog("Target: " + String((i + 1)));
 
     while(!hit){
