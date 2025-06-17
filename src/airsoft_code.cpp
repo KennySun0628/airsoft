@@ -24,7 +24,7 @@ const char* apPassword = "Airsoft123";
 const char* routerSSID = "";
 const char* routerPassword = "";
 
-const bool requireClient = true;
+const bool requireClient = false;
 
 const bool serverMode = ROUTER;
 
