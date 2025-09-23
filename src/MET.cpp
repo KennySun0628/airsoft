@@ -666,6 +666,15 @@ void MET::calibrateTargets(){
   }
 }
 
+void MET::testAnalogInput(){
+  int sensorValue[NUM_TARGETS] = {0};
+  while(true){
+    for (int i = 0; i < NUM_TARGETS; i++){
+      sensorValue[i] = analogRead(target[i].SENSOR_PIN);
+      sendLog("Target: " + String((i + 1)) + "  " + String(sensorValue[i]));
+    }
+  }
+}
 /*
 int readSensors(bool reset)
 Reads if sensors detect any unique inputs.

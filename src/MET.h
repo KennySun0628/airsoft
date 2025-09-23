@@ -75,6 +75,7 @@ private:
   void twin();
 
   void calibrateTargets();
+  void testAnalogInput();
 
   void setTargetColor(int, neoPixelColors, bool);
   void setAllTargetColor(neoPixelColors);
