@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function init(){
-	socket = new WebSocket("ws://" + window.location.hostname + ":81");
+	socket = new WebSocket("ws://" + window.location.hostname + "/ws");
 	socket.onmessage = function(event){
 		updateSerial(event);
 	};
@@ -192,7 +192,7 @@ function submitGamemode(event){
   event.preventDefault();
   const selectedGamemode = document.querySelector('input[name="game_mode"]:checked');
   if(!selectedGamemode){
-    alert("Please selecte a game mode.");
+    alert("Please select a game mode.");
     return;
   }
   const data = JSON.stringify({game_mode: selectedGamemode.value});

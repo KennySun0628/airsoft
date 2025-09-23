@@ -84,7 +84,6 @@ MET::MET(){
       target[targetNumber].rowIndex = i;
       target[targetNumber].startingLedIndex = j * TARGET_NUM_LED;
       target[targetNumber].endingLedIndex =  target[targetNumber].startingLedIndex + (TARGET_NUM_LED - 1);
-      
 
     }
     //Number of targets remaining gets decremented after every loop by the amount per strip   
