@@ -3,8 +3,8 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <WiFi.h>
-#include <ESPAsyncWebServer.h>
-#include <AsyncTCP.h>
+#include <WebServer.h>
+#include <WebSocketsServer.h>
 #include <ArduinoJson.h>
 
 #include "log.h"
@@ -33,8 +33,8 @@ const bool serverMode = ROUTER;
 
 //=======================================================================
 
-AsyncWebServer server (80);
-AsyncWebSocket webSocket = WebSocketsServer(81);
+WebServer server (80);
+WebSocketsServer webSocket = WebSocketsServer(81);
 
 String webpage = HTML_CONTENT_GAMEMODE;
 
@@ -193,13 +193,8 @@ void TaskWebServer(void* pvParameters){
     Serial.print("Setting up Access Point");
     Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? " Ready" : " Failed!");
     
-    WiFi.enableAP(true);      
-    delay(100); 
-
     Serial.print("Setting AP...");
-    Serial.println(WiFi.softAP(apSSID, apPassword, 1) ? " Ready" : " Failed!");
-
-    WiFi.softAPsetHostname("Airsoft");
+    Serial.println(WiFi.softAP(apSSID, apPassword, 6) ? " Ready" : " Failed!");
 
     Serial.print("IP address = ");
     Serial.println(WiFi.softAPIP());
@@ -222,27 +217,31 @@ void TaskWebServer(void* pvParameters){
       server.send(200, "text/html", webpage);
   });
 
-  server.addHandler(&webSocket);
   server.begin();
+  webSocket.begin();
 
   webSocket.onEvent(webSocketEvent);
   Serial.println("Web Server Started");
 
+  while(true){
+    server.handleClient();
+    webSocket.loop();
+
+    vTaskDelay(pdMS_TO_TICKS(50));
+  }
 }
 
-void webSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* args, uint8_t* data, size_t len){
+void webSocketEvent(byte num, WStype_t type, uint8_t *payload, size_t length){
   switch(type){
-    case WS_EVT_DISCONNECT:
+    case WStype_DISCONNECTED:
       sendLog("Client Disconnected");
       break;
-
-    case WS_EVT_CONNECT:
+    case WStype_CONNECTED:
       clientConnected = true;
       sendLog("Client Connected");
       break;
-
-    case WS_EVT_DATA: {
-      DeserializationError error = deserializeJson(doc_rx, data, len);
+    case WStype_TEXT:
+      DeserializationError error = deserializeJson(doc_rx, payload);
       if(error){
           sendLog("Deserialize Json() failed");
           return;
@@ -256,7 +255,6 @@ void webSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEve
         sendLog("Game is in progress");
       }
       break;
-    }
   }
   
 }
